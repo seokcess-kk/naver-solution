@@ -22,11 +22,11 @@ async function bootstrap(): Promise<void> {
 
     // Initialize DI container
     console.log('Initializing dependency injection container...');
-    DIContainer.getInstance(AppDataSource);
+    const container = DIContainer.getInstance(AppDataSource);
     console.log('✓ DI container initialized');
 
     // Create Express application
-    const app = createApp();
+    const app = createApp(container);
 
     // Start server
     const server = app.listen(PORT, () => {

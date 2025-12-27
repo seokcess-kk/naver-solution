@@ -1,0 +1,186 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Project Overview
+
+This is a **Naver Place Monitoring System** built with TypeScript, Express, TypeORM, and PostgreSQL. The application monitors Naver Place rankings, reviews, and competitor data for businesses, providing automated tracking and notification capabilities.
+
+## Common Development Commands
+
+### Build and Run
+```bash
+npm run build              # Compile TypeScript to JavaScript
+npm start                  # Run compiled code from dist/
+npm run dev                # Run in development mode with ts-node
+```
+
+### Testing
+```bash
+npm test                   # Run all tests
+npm run test:watch         # Run tests in watch mode
+npm run test:coverage      # Generate coverage report
+```
+
+### Code Quality
+```bash
+npm run lint               # Check for linting errors
+npm run lint:fix           # Auto-fix linting errors
+npm run format             # Format code with Prettier
+npm run format:check       # Check formatting without writing
+npm run type-check         # Type check without emitting files
+```
+
+### Database Migrations
+```bash
+npm run migration:generate # Generate new migration based on entity changes
+npm run migration:run      # Run pending migrations
+npm run migration:revert   # Revert last migration
+```
+
+## Architecture
+
+This project follows **Clean Architecture** with strict layer separation:
+
+### Layer Structure
+
+```
+src/
+├── domain/              # Core business logic (framework-agnostic)
+│   ├── entities/        # Business entities (TypeORM entities)
+│   └── repositories/    # Repository interfaces (contracts)
+│
+├── application/         # Application business rules
+│   ├── dtos/           # Data Transfer Objects
+│   ├── services/       # Application services
+│   └── usecases/       # Use case implementations
+│       ├── analysis/   # Analytics and insights
+│       ├── notification/  # Notification logic
+│       ├── place/      # Place management
+│       └── tracking/   # Ranking/review tracking
+│
+├── infrastructure/      # External dependencies & implementations
+│   ├── ai/             # AI/ML integrations (sentiment analysis)
+│   ├── cache/          # Redis/caching layer
+│   ├── database/       # TypeORM data source & migrations
+│   ├── naver/          # Naver API/scraping (Puppeteer)
+│   ├── notification/   # Email/Slack notification implementations
+│   └── repositories/   # Repository concrete implementations
+│
+└── presentation/        # External interfaces
+    ├── api/            # REST API layer
+    │   ├── controllers/
+    │   ├── middleware/
+    │   └── routes/
+    └── web/            # Web UI (if applicable)
+```
+
+### Dependency Rule
+
+Dependencies flow inward:
+- **presentation** → **application** → **domain**
+- **infrastructure** → **application** & **domain**
+- Domain layer has NO dependencies on outer layers
+
+### Path Aliases
+
+Use TypeScript path aliases to reference layers:
+- `@domain/*` → `src/domain/*`
+- `@application/*` → `src/application/*`
+- `@infrastructure/*` → `src/infrastructure/*`
+- `@presentation/*` → `src/presentation/*`
+
+## Database Schema
+
+The system uses PostgreSQL with 11 core tables:
+
+### Core Entities
+- **users**: User accounts with JWT authentication
+- **places**: Naver Place entries being monitored
+- **keywords**: Search keywords for ranking tracking
+- **place_keywords**: Many-to-many relation (place + keyword + region)
+
+### Tracking Data
+- **ranking_histories**: Historical ranking data per place/keyword
+- **review_histories**: Aggregated review stats over time
+- **reviews**: Individual reviews with sentiment analysis
+- **competitors**: Competitor places for comparison
+- **competitor_snapshots**: Historical competitor metrics
+
+### Notifications
+- **notification_settings**: User notification preferences (JSONB conditions)
+- **notification_logs**: Notification delivery logs
+
+### Key Design Patterns
+- Uses UUIDs for all primary keys
+- Composite indexes on frequently queried columns (place_id + checked_at)
+- JSONB for flexible notification conditions
+- ON DELETE CASCADE for data integrity
+
+## Technology Stack
+
+### Core Dependencies
+- **TypeORM**: ORM with decorators (experimentalDecorators enabled)
+- **Express**: Web framework
+- **Puppeteer**: Web scraping for Naver Place data
+- **bcrypt**: Password hashing
+- **jsonwebtoken**: JWT authentication
+- **class-validator** & **class-transformer**: DTO validation
+- **pg**: PostgreSQL driver
+
+### Configuration Notes
+- TypeORM synchronize is disabled (use migrations only)
+- Strict TypeScript mode enabled
+- StrictPropertyInitialization disabled for TypeORM entities
+- CommonJS module system
+
+## Environment Setup
+
+Copy `.env.example` to `.env` and configure:
+- PostgreSQL connection (DB_HOST, DB_PORT, DB_USERNAME, DB_PASSWORD, DB_DATABASE)
+- JWT settings (JWT_SECRET, JWT_EXPIRES_IN)
+- SMTP for email notifications
+- Slack webhook URL for Slack notifications
+- Redis connection (optional, for caching)
+
+## Development Workflow
+
+1. **Database First**: Always run migrations before starting development
+2. **Entity Changes**: When modifying entities, generate migrations (don't rely on synchronize)
+3. **Use Cases**: Place business logic in application/usecases, not controllers
+4. **Repository Pattern**: Infrastructure repositories implement domain interfaces
+5. **DTO Validation**: Use class-validator decorators on DTOs
+6. **Testing**: Jest is configured with ts-jest; tests go in `tests/` or `*.test.ts` files
+
+## Important Patterns
+
+### Repository Implementation
+- Interfaces defined in `domain/repositories/`
+- Implementations in `infrastructure/repositories/`
+- Inject repository interfaces into use cases, not concrete implementations
+
+### Use Case Structure
+- One class per use case
+- Dependencies injected via constructor
+- Return DTOs, not entities directly
+- Handle domain logic, not HTTP concerns
+
+### Scraping with Puppeteer
+- Located in `infrastructure/naver/`
+- Must handle dynamic content loading
+- Implement rate limiting to avoid blocking
+- Extract ranking, review count, ratings
+
+### Notification System
+- Conditions stored as JSONB in database
+- Support multiple channels (email, Slack)
+- Log all notification attempts in notification_logs
+- Check notification_settings.is_enabled before sending
+
+## Code Organization Principles
+
+- Keep controllers thin (delegate to use cases)
+- No business logic in presentation layer
+- Use dependency injection for testability
+- Entities should only contain data structure and simple validations
+- Complex business rules belong in domain services or use cases

@@ -2,13 +2,16 @@ import express, { Application, Request, Response } from 'express';
 import cors from 'cors';
 import { requestLogger } from './middleware/requestLogger';
 import { errorHandler } from './middleware/errorHandler';
+import { DIContainer } from './config/DIContainer';
+import { createApiRoutes } from './routes';
 
 /**
  * Create and configure Express application
  *
+ * @param container - Dependency injection container
  * @returns Configured Express application
  */
-export function createApp(): Application {
+export function createApp(container: DIContainer): Application {
   const app: Application = express();
 
   // CORS configuration
@@ -35,8 +38,8 @@ export function createApp(): Application {
     });
   });
 
-  // TODO: Mount API routes here
-  // app.use('/api', routes);
+  // Mount API routes
+  app.use('/api', createApiRoutes(container));
 
   // Global error handler (must be last)
   app.use(errorHandler);
