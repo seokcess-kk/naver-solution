@@ -9,3 +9,4 @@ export { Competitor } from './Competitor';
 export { CompetitorSnapshot } from './CompetitorSnapshot';
 export { NotificationSetting } from './NotificationSetting';
 export { NotificationLog } from './NotificationLog';
+export { RefreshToken } from './RefreshToken';

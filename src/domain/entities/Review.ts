@@ -42,9 +42,9 @@ export class Review {
   @Column({ name: 'sentiment_score', type: 'decimal', precision: 3, scale: 2, nullable: true })
   sentimentScore: number | null;
 
-  @Column({ name: 'published_at', type: 'timestamp', nullable: true })
+  @Column({ name: 'published_at', type: 'datetime', nullable: true })
   publishedAt: Date | null;
 
-  @CreateDateColumn({ name: 'created_at', type: 'timestamp' })
+  @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 }

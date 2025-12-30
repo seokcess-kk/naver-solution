@@ -17,7 +17,7 @@ export class Keyword {
   @Column({ name: 'keyword', type: 'varchar', length: 100, unique: true })
   keyword: string;
 
-  @CreateDateColumn({ name: 'created_at', type: 'timestamp' })
+  @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 
   @OneToMany(() => PlaceKeyword, (placeKeyword) => placeKeyword.keyword, {

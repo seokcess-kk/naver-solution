@@ -35,7 +35,7 @@ export class PlaceKeyword {
   @Column({ name: 'is_active', type: 'boolean', default: true })
   isActive: boolean;
 
-  @CreateDateColumn({ name: 'created_at', type: 'timestamp' })
+  @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 
   @OneToMany(() => RankingHistory, (history) => history.placeKeyword, {

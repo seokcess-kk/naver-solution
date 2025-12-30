@@ -40,13 +40,13 @@ export class NotificationSetting {
   @Column({ name: 'is_enabled', type: 'boolean', default: true })
   isEnabled: boolean;
 
-  @Column({ name: 'conditions', type: 'jsonb', nullable: true })
+  @Column({ name: 'conditions', type: 'simple-json', nullable: true })
   conditions: Record<string, any> | null;
 
-  @CreateDateColumn({ name: 'created_at', type: 'timestamp' })
+  @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 
-  @UpdateDateColumn({ name: 'updated_at', type: 'timestamp' })
+  @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
 
   @OneToMany(() => NotificationLog, (log) => log.notificationSetting)

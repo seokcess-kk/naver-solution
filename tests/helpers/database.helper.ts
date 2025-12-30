@@ -13,17 +13,13 @@ import { NotificationLog } from '@domain/entities/NotificationLog';
 import { RefreshToken } from '@domain/entities/RefreshToken';
 
 /**
- * Create a test DataSource using PostgreSQL test database
- * Requires Docker container running: docker-compose -f docker-compose.test.yml up -d
+ * Create a test DataSource using SQLite in-memory database
+ * Fast and requires no external dependencies
  */
 export async function createTestDataSource(): Promise<DataSource> {
   const dataSource = new DataSource({
-    type: 'postgres',
-    host: process.env.TEST_DB_HOST || 'localhost',
-    port: parseInt(process.env.TEST_DB_PORT || '5433'),
-    username: process.env.TEST_DB_USERNAME || 'test',
-    password: process.env.TEST_DB_PASSWORD || 'test',
-    database: process.env.TEST_DB_DATABASE || 'naver_test',
+    type: 'better-sqlite3',
+    database: ':memory:',
     entities: [
       User,
       Place,

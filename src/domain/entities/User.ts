@@ -9,6 +9,7 @@ import {
 } from 'typeorm';
 import { Place } from './Place';
 import { NotificationSetting } from './NotificationSetting';
+import { RefreshToken } from './RefreshToken';
 
 @Entity('users')
 @Index('idx_users_email', ['email'])
@@ -25,10 +26,10 @@ export class User {
   @Column({ name: 'name', type: 'varchar', length: 100 })
   name: string;
 
-  @CreateDateColumn({ name: 'created_at', type: 'timestamp' })
+  @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 
-  @UpdateDateColumn({ name: 'updated_at', type: 'timestamp' })
+  @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
 
   @OneToMany(() => Place, (place) => place.user, { cascade: ['insert', 'update'] })
@@ -38,4 +39,9 @@ export class User {
     cascade: ['insert', 'update'],
   })
   notificationSettings: NotificationSetting[];
+
+  @OneToMany(() => RefreshToken, (token) => token.user, {
+    cascade: ['insert', 'update'],
+  })
+  refreshTokens: RefreshToken[];
 }

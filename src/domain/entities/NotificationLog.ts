@@ -37,12 +37,12 @@ export class NotificationLog {
   @Column({ name: 'is_sent', type: 'boolean', default: false })
   isSent: boolean;
 
-  @Column({ name: 'sent_at', type: 'timestamp', nullable: true })
+  @Column({ name: 'sent_at', type: 'datetime', nullable: true })
   sentAt: Date | null;
 
   @Column({ name: 'error_message', type: 'text', nullable: true })
   errorMessage: string | null;
 
-  @CreateDateColumn({ name: 'created_at', type: 'timestamp' })
+  @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 }
