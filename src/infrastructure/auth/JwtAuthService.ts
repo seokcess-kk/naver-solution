@@ -47,6 +47,7 @@ export class JwtAuthService implements IJwtAuthService {
     const payload = {
       userId,
       type: 'refresh' as const,
+      jti: `${userId}-${Date.now()}-${Math.random().toString(36).substring(2, 15)}`, // Unique token ID
     };
     return jwt.sign(payload, this.secret, { expiresIn: this.refreshExpiresIn } as jwt.SignOptions);
   }

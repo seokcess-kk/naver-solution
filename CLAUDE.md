@@ -38,6 +38,8 @@ npm run migration:run      # Run pending migrations
 npm run migration:revert   # Revert last migration
 ```
 
+**Important**: Migration commands use `ts-node -r tsconfig-paths/register` to support path aliases. When generating migrations, TypeORM compares current entities against database schema (synchronize is disabled in production).
+
 ## Architecture
 
 This project follows **Clean Architecture** with strict layer separation:
@@ -48,19 +50,24 @@ This project follows **Clean Architecture** with strict layer separation:
 src/
 ├── domain/              # Core business logic (framework-agnostic)
 │   ├── entities/        # Business entities (TypeORM entities)
-│   └── repositories/    # Repository interfaces (contracts)
+│   ├── repositories/    # Repository interfaces (contracts)
+│   └── services/        # Domain service interfaces (IPasswordHashService, IJwtAuthService)
 │
 ├── application/         # Application business rules
 │   ├── dtos/           # Data Transfer Objects
-│   ├── services/       # Application services
+│   ├── errors/         # Application-level error classes (HttpError, NotFoundError, etc.)
 │   └── usecases/       # Use case implementations
-│       ├── analysis/   # Analytics and insights
-│       ├── notification/  # Notification logic
+│       ├── auth/       # User authentication (register, login, refresh, logout)
 │       ├── place/      # Place management
 │       └── tracking/   # Ranking/review tracking
+│           ├── ranking/
+│           ├── review/
+│           ├── review-history/
+│           └── competitor/
 │
 ├── infrastructure/      # External dependencies & implementations
 │   ├── ai/             # AI/ML integrations (sentiment analysis)
+│   ├── auth/           # Authentication implementations (PasswordHashService, JwtAuthService)
 │   ├── cache/          # Redis/caching layer
 │   ├── database/       # TypeORM data source & migrations
 │   ├── naver/          # Naver API/scraping (Puppeteer)
@@ -68,11 +75,11 @@ src/
 │   └── repositories/   # Repository concrete implementations
 │
 └── presentation/        # External interfaces
-    ├── api/            # REST API layer
-    │   ├── controllers/
-    │   ├── middleware/
-    │   └── routes/
-    └── web/            # Web UI (if applicable)
+    └── api/            # REST API layer
+        ├── config/     # DIContainer for dependency injection
+        ├── controllers/
+        ├── middleware/
+        └── routes/
 ```
 
 ### Dependency Rule
@@ -96,6 +103,7 @@ The system uses PostgreSQL with 11 core tables:
 
 ### Core Entities
 - **users**: User accounts with JWT authentication
+- **refresh_tokens**: Refresh tokens for JWT auth (linked to users)
 - **places**: Naver Place entries being monitored
 - **keywords**: Search keywords for ranking tracking
 - **place_keywords**: Many-to-many relation (place + keyword + region)
@@ -138,10 +146,12 @@ The system uses PostgreSQL with 11 core tables:
 
 Copy `.env.example` to `.env` and configure:
 - PostgreSQL connection (DB_HOST, DB_PORT, DB_USERNAME, DB_PASSWORD, DB_DATABASE)
-- JWT settings (JWT_SECRET, JWT_EXPIRES_IN)
+- JWT settings (JWT_SECRET, JWT_ACCESS_EXPIRES_IN, JWT_REFRESH_EXPIRES_IN)
+- Security (BCRYPT_SALT_ROUNDS)
 - SMTP for email notifications
 - Slack webhook URL for Slack notifications
 - Redis connection (optional, for caching)
+- Naver scraping configuration (PUPPETEER_HEADLESS, PUPPETEER_TIMEOUT, etc.)
 
 ## Development Workflow
 
@@ -153,6 +163,21 @@ Copy `.env.example` to `.env` and configure:
 6. **Testing**: Jest is configured with ts-jest; tests go in `tests/` or `*.test.ts` files
 
 ## Important Patterns
+
+### Dependency Injection Container
+- Located at `presentation/api/config/DIContainer.ts`
+- Singleton pattern managing all repositories, services, and use cases
+- Initialized at application startup with TypeORM DataSource
+- Uses `ServiceRegistry` interface for compile-time type safety and IDE autocomplete
+- Access dependencies via `container.get('ServiceName')` (returns correctly typed instance)
+- All use cases receive dependencies through constructor injection
+- Example: `container.get('UserRepository')` returns `IUserRepository` type
+
+### Error Handling
+- Custom error classes located in `application/errors/HttpError.ts`
+- Base `HttpError` class with `statusCode` and `isOperational` flag
+- Specific errors: `NotFoundError`, `UnauthorizedError`, `ForbiddenError`, `BadRequestError`, `ValidationError`, `ConflictError`, `InternalServerError`
+- Use these errors in use cases; middleware handles conversion to HTTP responses
 
 ### Repository Implementation
 - Interfaces defined in `domain/repositories/`
