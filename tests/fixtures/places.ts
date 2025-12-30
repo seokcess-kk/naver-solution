@@ -60,9 +60,10 @@ export class PlaceFixture {
    * Create a restaurant place
    */
   static restaurant(user: User): Place {
+    this.counter++;
     return this.create(user, {
       category: '음식점',
-      name: faker.company.name() + ' 식당',
+      name: `테스트 식당 ${this.counter}`,
     });
   }
 
@@ -70,9 +71,10 @@ export class PlaceFixture {
    * Create a cafe place
    */
   static cafe(user: User): Place {
+    this.counter++;
     return this.create(user, {
       category: '카페',
-      name: faker.company.name() + ' 카페',
+      name: `테스트 카페 ${this.counter}`,
     });
   }
 
