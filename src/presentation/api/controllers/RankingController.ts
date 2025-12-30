@@ -2,15 +2,18 @@ import { Request, Response, NextFunction } from 'express';
 import { RecordRankingUseCase } from '@application/usecases/tracking/ranking/RecordRankingUseCase';
 import { GetRankingHistoryUseCase } from '@application/usecases/tracking/ranking/GetRankingHistoryUseCase';
 import { GetLatestRankingUseCase } from '@application/usecases/tracking/ranking/GetLatestRankingUseCase';
+import { ScrapeRankingUseCase } from '@application/usecases/tracking/ranking/ScrapeRankingUseCase';
 import { RecordRankingDto } from '@application/dtos/tracking/ranking/RecordRankingDto';
 import { GetRankingHistoryDto } from '@application/dtos/tracking/ranking/GetRankingHistoryDto';
-import { BadRequestError } from '../utils/errors';
+import { ScrapeRankingDto } from '@application/dtos/tracking/ranking/ScrapeRankingDto';
+import { BadRequestError } from '@application/errors/HttpError';
 
 export class RankingController {
   constructor(
     private readonly recordRankingUseCase: RecordRankingUseCase,
     private readonly getRankingHistoryUseCase: GetRankingHistoryUseCase,
-    private readonly getLatestRankingUseCase: GetLatestRankingUseCase
+    private readonly getLatestRankingUseCase: GetLatestRankingUseCase,
+    private readonly scrapeRankingUseCase: ScrapeRankingUseCase
   ) {}
 
   /**
@@ -88,6 +91,28 @@ export class RankingController {
       const result = await this.getLatestRankingUseCase.execute(placeKeywordId);
 
       res.status(200).json({
+        success: true,
+        data: result,
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  /**
+   * POST /api/rankings/scrape
+   * Trigger Naver ranking scraping for a PlaceKeyword
+   */
+  scrapeRanking = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      const dto: ScrapeRankingDto = req.body;
+      const result = await this.scrapeRankingUseCase.execute(dto);
+
+      res.status(201).json({
         success: true,
         data: result,
       });

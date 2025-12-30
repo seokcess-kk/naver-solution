@@ -8,7 +8,7 @@ import { DeletePlaceUseCase } from '@application/usecases/place/DeletePlaceUseCa
 import { CreatePlaceDto } from '@application/dtos/place/CreatePlaceDto';
 import { UpdatePlaceDto } from '@application/dtos/place/UpdatePlaceDto';
 import { UpdatePlaceActiveStatusDto } from '@application/dtos/place/UpdatePlaceActiveStatusDto';
-import { NotFoundError, BadRequestError } from '../utils/errors';
+import { NotFoundError, BadRequestError } from '@application/errors/HttpError';
 
 export class PlaceController {
   constructor(
@@ -75,7 +75,8 @@ export class PlaceController {
 
   /**
    * GET /api/places
-   * List all places for a user (query param: userId)
+   * List all places for a user
+   * Query params: userId (required), page?, limit?, sortBy?, sortOrder?
    */
   listPlaces = async (
     req: Request,
@@ -83,17 +84,38 @@ export class PlaceController {
     next: NextFunction
   ): Promise<void> => {
     try {
-      const { userId } = req.query;
+      const { userId, page, limit, sortBy, sortOrder } = req.query;
 
       if (!userId || typeof userId !== 'string') {
         throw new BadRequestError('userId query parameter is required');
       }
 
-      const result = await this.listPlacesUseCase.execute(userId);
+      // Parse pagination parameters
+      const pageNum = page ? parseInt(page as string, 10) : 1;
+      const limitNum = limit ? Math.min(parseInt(limit as string, 10), 100) : 10;
+      const sortByField = (sortBy as string) || 'createdAt';
+      const sortOrderValue = (sortOrder as 'ASC' | 'DESC') || 'DESC';
+
+      // Validate pagination parameters
+      if (isNaN(pageNum) || pageNum < 1) {
+        throw new BadRequestError('page must be a positive integer');
+      }
+      if (isNaN(limitNum) || limitNum < 1 || limitNum > 100) {
+        throw new BadRequestError('limit must be between 1 and 100');
+      }
+
+      const result = await this.listPlacesUseCase.execute({
+        userId,
+        page: pageNum,
+        limit: limitNum,
+        sortBy: sortByField,
+        sortOrder: sortOrderValue,
+      });
 
       res.status(200).json({
         success: true,
-        data: result,
+        data: result.data,
+        pagination: result.pagination,
       });
     } catch (error) {
       next(error);

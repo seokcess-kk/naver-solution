@@ -3,6 +3,7 @@ import { IPlaceRepository } from '@domain/repositories/IPlaceRepository';
 import { Review } from '@domain/entities/Review';
 import { RecordReviewDto } from '@application/dtos/tracking/review/RecordReviewDto';
 import { ReviewResponseDto } from '@application/dtos/tracking/review/ReviewResponseDto';
+import { NotFoundError, ConflictError, BadRequestError } from '@application/errors/HttpError';
 
 export class RecordReviewUseCase {
   constructor(
@@ -14,20 +15,20 @@ export class RecordReviewUseCase {
     // 1. Validate Place exists
     const place = await this.placeRepository.findById(dto.placeId);
     if (!place) {
-      throw new Error('Place not found');
+      throw new NotFoundError(`Place with id ${dto.placeId} not found`);
     }
 
     // 2. Check for duplicate naverReviewId
     if (dto.naverReviewId) {
       const existing = await this.reviewRepository.findByNaverReviewId(dto.naverReviewId);
       if (existing) {
-        throw new Error('Review with this naverReviewId already exists');
+        throw new ConflictError(`Review with naverReviewId ${dto.naverReviewId} already exists`);
       }
     }
 
     // 3. Business Rule: Sentiment validation
     if (dto.sentiment && !dto.sentimentScore) {
-      throw new Error('sentimentScore required when sentiment is provided');
+      throw new BadRequestError('sentimentScore required when sentiment is provided');
     }
 
     // 4. Create Review entity

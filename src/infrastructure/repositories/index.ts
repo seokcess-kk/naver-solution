@@ -9,3 +9,4 @@ export { CompetitorRepository } from './CompetitorRepository';
 export { CompetitorSnapshotRepository } from './CompetitorSnapshotRepository';
 export { NotificationSettingRepository } from './NotificationSettingRepository';
 export { NotificationLogRepository } from './NotificationLogRepository';
+export { RefreshTokenRepository } from './RefreshTokenRepository';

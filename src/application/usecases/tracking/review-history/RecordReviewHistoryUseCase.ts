@@ -3,6 +3,7 @@ import { IPlaceRepository } from '@domain/repositories/IPlaceRepository';
 import { ReviewHistory } from '@domain/entities/ReviewHistory';
 import { RecordReviewHistoryDto } from '@application/dtos/tracking/review-history/RecordReviewHistoryDto';
 import { ReviewHistoryResponseDto } from '@application/dtos/tracking/review-history/ReviewHistoryResponseDto';
+import { NotFoundError, BadRequestError } from '@application/errors/HttpError';
 
 export class RecordReviewHistoryUseCase {
   constructor(
@@ -14,12 +15,12 @@ export class RecordReviewHistoryUseCase {
     // 1. Validate Place exists
     const place = await this.placeRepository.findById(dto.placeId);
     if (!place) {
-      throw new Error('Place not found');
+      throw new NotFoundError(`Place with id ${dto.placeId} not found`);
     }
 
     // 2. Business Rule: Place must be active
     if (!place.isActive) {
-      throw new Error('Cannot record review history for inactive Place');
+      throw new BadRequestError(`Cannot record review history for inactive Place ${dto.placeId}`);
     }
 
     // 3. Create ReviewHistory entity

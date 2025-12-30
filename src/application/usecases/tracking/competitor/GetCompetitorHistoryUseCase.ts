@@ -3,6 +3,7 @@ import { ICompetitorRepository } from '@domain/repositories/ICompetitorRepositor
 import { CompetitorSnapshot } from '@domain/entities/CompetitorSnapshot';
 import { GetCompetitorHistoryDto } from '@application/dtos/tracking/competitor/GetCompetitorHistoryDto';
 import { CompetitorSnapshotResponseDto } from '@application/dtos/tracking/competitor/CompetitorSnapshotResponseDto';
+import { NotFoundError } from '@application/errors/HttpError';
 
 export class GetCompetitorHistoryUseCase {
   constructor(
@@ -14,7 +15,7 @@ export class GetCompetitorHistoryUseCase {
     // 1. Validate Competitor exists
     const competitor = await this.competitorRepository.findById(dto.competitorId);
     if (!competitor) {
-      throw new Error('Competitor not found');
+      throw new NotFoundError(`Competitor with id ${dto.competitorId} not found`);
     }
 
     // 2. Get history based on date range or limit

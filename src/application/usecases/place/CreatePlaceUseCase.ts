@@ -3,6 +3,7 @@ import { IUserRepository } from '@domain/repositories/IUserRepository';
 import { Place } from '@domain/entities/Place';
 import { CreatePlaceDto } from '@application/dtos/place/CreatePlaceDto';
 import { PlaceResponseDto } from '@application/dtos/place/PlaceResponseDto';
+import { NotFoundError, ConflictError } from '@application/errors/HttpError';
 
 export class CreatePlaceUseCase {
   constructor(
@@ -14,13 +15,13 @@ export class CreatePlaceUseCase {
     // 1. Validate user exists
     const user = await this.userRepository.findById(dto.userId);
     if (!user) {
-      throw new Error('User not found');
+      throw new NotFoundError(`User with id ${dto.userId} not found`);
     }
 
     // 2. Check for duplicate naverPlaceId
     const existingPlace = await this.placeRepository.findByNaverPlaceId(dto.naverPlaceId);
     if (existingPlace) {
-      throw new Error('Place with this naverPlaceId already exists');
+      throw new ConflictError(`Place with naverPlaceId ${dto.naverPlaceId} already exists`);
     }
 
     // 3. Create Place entity

@@ -1,6 +1,7 @@
 import { IReviewHistoryRepository } from '@domain/repositories/IReviewHistoryRepository';
 import { IPlaceRepository } from '@domain/repositories/IPlaceRepository';
 import { ReviewHistoryResponseDto } from '@application/dtos/tracking/review-history/ReviewHistoryResponseDto';
+import { NotFoundError } from '@application/errors/HttpError';
 
 export class GetLatestReviewStatsUseCase {
   constructor(
@@ -12,7 +13,7 @@ export class GetLatestReviewStatsUseCase {
     // 1. Validate Place exists
     const place = await this.placeRepository.findById(placeId);
     if (!place) {
-      throw new Error('Place not found');
+      throw new NotFoundError(`Place with id ${placeId} not found`);
     }
 
     // 2. Get latest review stats

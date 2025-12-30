@@ -1,6 +1,8 @@
 import { DataSource, Repository, Between } from 'typeorm';
 import { ICompetitorSnapshotRepository } from '@domain/repositories/ICompetitorSnapshotRepository';
+import { PaginationOptions, PaginatedResult } from '@domain/repositories/IBaseRepository';
 import { CompetitorSnapshot } from '@domain/entities/CompetitorSnapshot';
+import { NotFoundError } from '@application/errors/HttpError';
 
 export class CompetitorSnapshotRepository implements ICompetitorSnapshotRepository {
   private readonly repository: Repository<CompetitorSnapshot>;
@@ -13,8 +15,26 @@ export class CompetitorSnapshotRepository implements ICompetitorSnapshotReposito
     return this.repository.findOne({ where: { id } });
   }
 
-  async findAll(): Promise<CompetitorSnapshot[]> {
-    return this.repository.find();
+  async findAll(options: PaginationOptions = {}): Promise<PaginatedResult<CompetitorSnapshot>> {
+    const { page = 1, limit = 10, sortBy = 'createdAt', sortOrder = 'DESC' } = options;
+    const skip = (page - 1) * limit;
+
+    const [data, total] = await this.repository.findAndCount({
+      skip,
+      take: limit,
+      order: { [sortBy]: sortOrder },
+      relations: ['competitor'],
+    });
+
+    return {
+      data,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
   }
 
   async save(snapshot: CompetitorSnapshot): Promise<CompetitorSnapshot> {
@@ -22,16 +42,28 @@ export class CompetitorSnapshotRepository implements ICompetitorSnapshotReposito
   }
 
   async update(id: string, data: Partial<CompetitorSnapshot>): Promise<CompetitorSnapshot> {
-    await this.repository.update(id, data);
-    const updated = await this.findById(id);
-    if (!updated) {
-      throw new Error(`CompetitorSnapshot with id ${id} not found`);
+    const exists = await this.exists(id);
+    if (!exists) {
+      throw new NotFoundError(`CompetitorSnapshot with id ${id} not found`);
     }
-    return updated;
+    await this.repository.update(id, data);
+    return (await this.findById(id))!;
   }
 
   async delete(id: string): Promise<void> {
+    const exists = await this.exists(id);
+    if (!exists) {
+      throw new NotFoundError(`CompetitorSnapshot with id ${id} not found`);
+    }
     await this.repository.delete(id);
+  }
+
+  async exists(id: string): Promise<boolean> {
+    return this.repository.exist({ where: { id } });
+  }
+
+  async count(): Promise<number> {
+    return this.repository.count();
   }
 
   async findByCompetitorId(competitorId: string, limit?: number): Promise<CompetitorSnapshot[]> {

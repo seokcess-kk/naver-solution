@@ -1,28 +1,47 @@
 import { Router } from 'express';
+import { DIContainer } from '../config/DIContainer';
 import { PlaceController } from '../controllers/PlaceController';
 import { validateDto } from '../middleware/validateDto';
+import { createAuthMiddleware } from '../middleware/authMiddleware';
 import { CreatePlaceDto, UpdatePlaceDto } from '@application/dtos/place';
+import { IJwtAuthService } from '@domain/services/IJwtAuthService';
 
-export function createPlaceRoutes(controller: PlaceController): Router {
+export function createPlaceRoutes(container: DIContainer): Router {
   const router = Router();
 
-  // POST /api/places - Create a new place
-  router.post('/', validateDto(CreatePlaceDto), controller.createPlace);
+  // Create authMiddleware from DI container
+  const authMiddleware = createAuthMiddleware(
+    container.get('JwtAuthService')
+  );
 
-  // GET /api/places - List all places for a user (query param: userId)
-  router.get('/', controller.listPlaces);
+  // Create controller from DI container
+  const controller = new PlaceController(
+    container.get('CreatePlaceUseCase'),
+    container.get('GetPlaceUseCase'),
+    container.get('ListPlacesUseCase'),
+    container.get('UpdatePlaceUseCase'),
+    container.get('UpdatePlaceActiveStatusUseCase'),
+    container.get('DeletePlaceUseCase')
+  );
+
+  // All routes require authentication
+  // POST /api/places - Create a new place
+  router.post('/', authMiddleware, validateDto(CreatePlaceDto), controller.createPlace);
+
+  // GET /api/places - List all places for a user
+  router.get('/', authMiddleware, controller.listPlaces);
 
   // GET /api/places/:id - Get a single place
-  router.get('/:id', controller.getPlace);
+  router.get('/:id', authMiddleware, controller.getPlace);
 
   // PUT /api/places/:id - Update a place
-  router.put('/:id', validateDto(UpdatePlaceDto), controller.updatePlace);
+  router.put('/:id', authMiddleware, validateDto(UpdatePlaceDto), controller.updatePlace);
 
   // PATCH /api/places/:id/status - Update place active status
-  router.patch('/:id/status', controller.updatePlaceActiveStatus);
+  router.patch('/:id/status', authMiddleware, controller.updatePlaceActiveStatus);
 
   // DELETE /api/places/:id - Delete a place
-  router.delete('/:id', controller.deletePlace);
+  router.delete('/:id', authMiddleware, controller.deletePlace);
 
   return router;
 }

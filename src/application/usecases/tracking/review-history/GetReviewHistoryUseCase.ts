@@ -3,6 +3,7 @@ import { IPlaceRepository } from '@domain/repositories/IPlaceRepository';
 import { ReviewHistory } from '@domain/entities/ReviewHistory';
 import { GetReviewHistoryDto } from '@application/dtos/tracking/review-history/GetReviewHistoryDto';
 import { ReviewHistoryResponseDto } from '@application/dtos/tracking/review-history/ReviewHistoryResponseDto';
+import { NotFoundError } from '@application/errors/HttpError';
 
 export class GetReviewHistoryUseCase {
   constructor(
@@ -14,7 +15,7 @@ export class GetReviewHistoryUseCase {
     // 1. Validate Place exists
     const place = await this.placeRepository.findById(dto.placeId);
     if (!place) {
-      throw new Error('Place not found');
+      throw new NotFoundError(`Place with id ${dto.placeId} not found`);
     }
 
     // 2. Get history based on date range or limit

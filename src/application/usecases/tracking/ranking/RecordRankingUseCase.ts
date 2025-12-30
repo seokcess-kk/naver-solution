@@ -3,6 +3,7 @@ import { IPlaceKeywordRepository } from '@domain/repositories/IPlaceKeywordRepos
 import { RankingHistory } from '@domain/entities/RankingHistory';
 import { RecordRankingDto } from '@application/dtos/tracking/ranking/RecordRankingDto';
 import { RankingHistoryResponseDto } from '@application/dtos/tracking/ranking/RankingHistoryResponseDto';
+import { NotFoundError, BadRequestError } from '@application/errors/HttpError';
 
 export class RecordRankingUseCase {
   constructor(
@@ -14,12 +15,12 @@ export class RecordRankingUseCase {
     // 1. Validate PlaceKeyword exists
     const placeKeyword = await this.placeKeywordRepository.findById(dto.placeKeywordId);
     if (!placeKeyword) {
-      throw new Error('PlaceKeyword not found');
+      throw new NotFoundError(`PlaceKeyword with id ${dto.placeKeywordId} not found`);
     }
 
     // 2. Business Rule: PlaceKeyword must be active
     if (!placeKeyword.isActive) {
-      throw new Error('Cannot record ranking for inactive PlaceKeyword');
+      throw new BadRequestError(`Cannot record ranking for inactive PlaceKeyword ${dto.placeKeywordId}`);
     }
 
     // 3. Create RankingHistory entity

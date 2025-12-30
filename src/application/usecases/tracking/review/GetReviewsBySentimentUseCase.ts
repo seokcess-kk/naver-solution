@@ -1,6 +1,7 @@
 import { IReviewRepository } from '@domain/repositories/IReviewRepository';
 import { IPlaceRepository } from '@domain/repositories/IPlaceRepository';
 import { ReviewResponseDto } from '@application/dtos/tracking/review/ReviewResponseDto';
+import { NotFoundError, BadRequestError } from '@application/errors/HttpError';
 
 export class GetReviewsBySentimentUseCase {
   constructor(
@@ -12,13 +13,13 @@ export class GetReviewsBySentimentUseCase {
     // 1. Validate Place exists
     const place = await this.placeRepository.findById(placeId);
     if (!place) {
-      throw new Error('Place not found');
+      throw new NotFoundError(`Place with id ${placeId} not found`);
     }
 
     // 2. Validate sentiment value
     const validSentiments = ['POSITIVE', 'NEGATIVE', 'NEUTRAL'];
     if (!validSentiments.includes(sentiment)) {
-      throw new Error(`Invalid sentiment. Must be one of: ${validSentiments.join(', ')}`);
+      throw new BadRequestError(`Invalid sentiment. Must be one of: ${validSentiments.join(', ')}`);
     }
 
     // 3. Get reviews by sentiment

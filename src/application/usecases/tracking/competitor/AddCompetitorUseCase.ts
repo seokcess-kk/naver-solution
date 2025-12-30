@@ -3,6 +3,7 @@ import { IPlaceRepository } from '@domain/repositories/IPlaceRepository';
 import { Competitor } from '@domain/entities/Competitor';
 import { AddCompetitorDto } from '@application/dtos/tracking/competitor/AddCompetitorDto';
 import { CompetitorResponseDto } from '@application/dtos/tracking/competitor/CompetitorResponseDto';
+import { NotFoundError, ConflictError } from '@application/errors/HttpError';
 
 export class AddCompetitorUseCase {
   constructor(
@@ -14,7 +15,7 @@ export class AddCompetitorUseCase {
     // 1. Validate Place exists
     const place = await this.placeRepository.findById(dto.placeId);
     if (!place) {
-      throw new Error('Place not found');
+      throw new NotFoundError(`Place with id ${dto.placeId} not found`);
     }
 
     // 2. Business Rule: Check for duplicate competitor
@@ -23,7 +24,7 @@ export class AddCompetitorUseCase {
       dto.competitorNaverPlaceId
     );
     if (existing) {
-      throw new Error('Competitor already exists for this place');
+      throw new ConflictError(`Competitor with naverPlaceId ${dto.competitorNaverPlaceId} already exists for this place`);
     }
 
     // 3. Create Competitor entity

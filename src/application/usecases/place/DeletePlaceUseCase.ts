@@ -1,4 +1,5 @@
 import { IPlaceRepository } from '@domain/repositories/IPlaceRepository';
+import { NotFoundError } from '@application/errors/HttpError';
 
 export class DeletePlaceUseCase {
   constructor(private readonly placeRepository: IPlaceRepository) {}
@@ -7,7 +8,7 @@ export class DeletePlaceUseCase {
     // 1. Validate place exists
     const place = await this.placeRepository.findById(id);
     if (!place) {
-      throw new Error('Place not found');
+      throw new NotFoundError(`Place with id ${id} not found`);
     }
 
     // 2. Delete place (cascade deletes handled by DB)

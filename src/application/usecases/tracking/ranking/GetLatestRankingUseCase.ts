@@ -1,6 +1,7 @@
 import { IRankingHistoryRepository } from '@domain/repositories/IRankingHistoryRepository';
 import { IPlaceKeywordRepository } from '@domain/repositories/IPlaceKeywordRepository';
 import { RankingHistoryResponseDto } from '@application/dtos/tracking/ranking/RankingHistoryResponseDto';
+import { NotFoundError } from '@application/errors/HttpError';
 
 export class GetLatestRankingUseCase {
   constructor(
@@ -12,7 +13,7 @@ export class GetLatestRankingUseCase {
     // 1. Validate PlaceKeyword exists
     const placeKeyword = await this.placeKeywordRepository.findById(placeKeywordId);
     if (!placeKeyword) {
-      throw new Error('PlaceKeyword not found');
+      throw new NotFoundError(`PlaceKeyword with id ${placeKeywordId} not found`);
     }
 
     // 2. Get latest ranking

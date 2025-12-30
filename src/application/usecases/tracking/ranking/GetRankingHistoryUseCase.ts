@@ -3,6 +3,7 @@ import { IPlaceKeywordRepository } from '@domain/repositories/IPlaceKeywordRepos
 import { RankingHistory } from '@domain/entities/RankingHistory';
 import { GetRankingHistoryDto } from '@application/dtos/tracking/ranking/GetRankingHistoryDto';
 import { RankingHistoryResponseDto } from '@application/dtos/tracking/ranking/RankingHistoryResponseDto';
+import { NotFoundError } from '@application/errors/HttpError';
 
 export class GetRankingHistoryUseCase {
   constructor(
@@ -14,7 +15,7 @@ export class GetRankingHistoryUseCase {
     // 1. Validate PlaceKeyword exists
     const placeKeyword = await this.placeKeywordRepository.findById(dto.placeKeywordId);
     if (!placeKeyword) {
-      throw new Error('PlaceKeyword not found');
+      throw new NotFoundError(`PlaceKeyword with id ${dto.placeKeywordId} not found`);
     }
 
     // 2. Get history based on date range or limit

@@ -1,6 +1,8 @@
 import { DataSource, Repository } from 'typeorm';
 import { IKeywordRepository } from '@domain/repositories/IKeywordRepository';
+import { PaginationOptions, PaginatedResult } from '@domain/repositories/IBaseRepository';
 import { Keyword } from '@domain/entities/Keyword';
+import { NotFoundError } from '@application/errors/HttpError';
 
 export class KeywordRepository implements IKeywordRepository {
   private readonly repository: Repository<Keyword>;
@@ -13,8 +15,25 @@ export class KeywordRepository implements IKeywordRepository {
     return this.repository.findOne({ where: { id } });
   }
 
-  async findAll(): Promise<Keyword[]> {
-    return this.repository.find();
+  async findAll(options: PaginationOptions = {}): Promise<PaginatedResult<Keyword>> {
+    const { page = 1, limit = 10, sortBy = 'createdAt', sortOrder = 'DESC' } = options;
+    const skip = (page - 1) * limit;
+
+    const [data, total] = await this.repository.findAndCount({
+      skip,
+      take: limit,
+      order: { [sortBy]: sortOrder },
+    });
+
+    return {
+      data,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
   }
 
   async save(keyword: Keyword): Promise<Keyword> {
@@ -22,16 +41,28 @@ export class KeywordRepository implements IKeywordRepository {
   }
 
   async update(id: string, data: Partial<Keyword>): Promise<Keyword> {
-    await this.repository.update(id, data);
-    const updated = await this.findById(id);
-    if (!updated) {
-      throw new Error(`Keyword with id ${id} not found`);
+    const exists = await this.exists(id);
+    if (!exists) {
+      throw new NotFoundError(`Keyword with id ${id} not found`);
     }
-    return updated;
+    await this.repository.update(id, data);
+    return (await this.findById(id))!;
   }
 
   async delete(id: string): Promise<void> {
+    const exists = await this.exists(id);
+    if (!exists) {
+      throw new NotFoundError(`Keyword with id ${id} not found`);
+    }
     await this.repository.delete(id);
+  }
+
+  async exists(id: string): Promise<boolean> {
+    return this.repository.exist({ where: { id } });
+  }
+
+  async count(): Promise<number> {
+    return this.repository.count();
   }
 
   async findByKeyword(keyword: string): Promise<Keyword | null> {
@@ -50,7 +81,6 @@ export class KeywordRepository implements IKeywordRepository {
   }
 
   async existsByKeyword(keyword: string): Promise<boolean> {
-    const count = await this.repository.count({ where: { keyword } });
-    return count > 0;
+    return this.repository.exist({ where: { keyword } });
   }
 }

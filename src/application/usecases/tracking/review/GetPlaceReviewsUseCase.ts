@@ -3,6 +3,7 @@ import { IPlaceRepository } from '@domain/repositories/IPlaceRepository';
 import { Review } from '@domain/entities/Review';
 import { GetReviewsDto } from '@application/dtos/tracking/review/GetReviewsDto';
 import { ReviewResponseDto } from '@application/dtos/tracking/review/ReviewResponseDto';
+import { NotFoundError } from '@application/errors/HttpError';
 
 export class GetPlaceReviewsUseCase {
   constructor(
@@ -14,7 +15,7 @@ export class GetPlaceReviewsUseCase {
     // 1. Validate Place exists
     const place = await this.placeRepository.findById(dto.placeId);
     if (!place) {
-      throw new Error('Place not found');
+      throw new NotFoundError(`Place with id ${dto.placeId} not found`);
     }
 
     // 2. Get reviews with optional filters

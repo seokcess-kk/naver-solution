@@ -4,7 +4,7 @@ import { GetReviewHistoryUseCase } from '@application/usecases/tracking/review-h
 import { GetLatestReviewStatsUseCase } from '@application/usecases/tracking/review-history/GetLatestReviewStatsUseCase';
 import { RecordReviewHistoryDto } from '@application/dtos/tracking/review-history/RecordReviewHistoryDto';
 import { GetReviewHistoryDto } from '@application/dtos/tracking/review-history/GetReviewHistoryDto';
-import { BadRequestError } from '../utils/errors';
+import { BadRequestError } from '@application/errors/HttpError';
 
 export class ReviewHistoryController {
   constructor(

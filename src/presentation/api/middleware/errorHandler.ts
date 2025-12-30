@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { AppError, ValidationError } from '../utils/errors';
+import { HttpError, ValidationError } from '@application/errors/HttpError';
 
 interface ErrorResponse {
   success: false;
@@ -26,10 +26,10 @@ export const errorHandler = (
   let message = 'An unexpected error occurred';
   let details: Array<{ field: string; errors: string[] }> | undefined;
 
-  // Handle AppError and its subclasses
-  if (err instanceof AppError) {
+  // Handle HttpError and its subclasses
+  if (err instanceof HttpError) {
     statusCode = err.statusCode;
-    code = err.code;
+    code = err.name;
     message = err.message;
 
     // Include validation details if it's a ValidationError

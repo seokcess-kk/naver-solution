@@ -3,6 +3,7 @@ import { ICompetitorRepository } from '@domain/repositories/ICompetitorRepositor
 import { CompetitorSnapshot } from '@domain/entities/CompetitorSnapshot';
 import { RecordCompetitorSnapshotDto } from '@application/dtos/tracking/competitor/RecordCompetitorSnapshotDto';
 import { CompetitorSnapshotResponseDto } from '@application/dtos/tracking/competitor/CompetitorSnapshotResponseDto';
+import { NotFoundError, BadRequestError } from '@application/errors/HttpError';
 
 export class RecordCompetitorSnapshotUseCase {
   constructor(
@@ -14,12 +15,12 @@ export class RecordCompetitorSnapshotUseCase {
     // 1. Validate Competitor exists
     const competitor = await this.competitorRepository.findById(dto.competitorId);
     if (!competitor) {
-      throw new Error('Competitor not found');
+      throw new NotFoundError(`Competitor with id ${dto.competitorId} not found`);
     }
 
     // 2. Business Rule: Competitor must be active
     if (!competitor.isActive) {
-      throw new Error('Cannot record snapshot for inactive competitor');
+      throw new BadRequestError(`Cannot record snapshot for inactive competitor ${dto.competitorId}`);
     }
 
     // 3. Create CompetitorSnapshot entity

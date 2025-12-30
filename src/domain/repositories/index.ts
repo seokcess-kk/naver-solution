@@ -1,3 +1,12 @@
+// Base Repository
+export {
+  IBaseRepository,
+  PaginationOptions,
+  PaginationMetadata,
+  PaginatedResult,
+} from './IBaseRepository';
+
+// Repository Interfaces
 export { IUserRepository } from './IUserRepository';
 export { IKeywordRepository } from './IKeywordRepository';
 export { IPlaceRepository } from './IPlaceRepository';
@@ -9,3 +18,4 @@ export { ICompetitorRepository } from './ICompetitorRepository';
 export { ICompetitorSnapshotRepository } from './ICompetitorSnapshotRepository';
 export { INotificationSettingRepository } from './INotificationSettingRepository';
 export { INotificationLogRepository } from './INotificationLogRepository';
+export { IRefreshTokenRepository } from './IRefreshTokenRepository';

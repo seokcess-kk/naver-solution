@@ -3,6 +3,7 @@ import { UserRepository } from '@infrastructure/repositories/UserRepository';
 import { User } from '@domain/entities/User';
 import { createTestDataSource, closeTestDataSource, resetDatabase } from '@tests/helpers/database.helper';
 import { UserFixture } from '@tests/fixtures/users';
+import { NotFoundError } from '@application/errors/HttpError';
 
 describe('UserRepository Integration Tests', () => {
   let dataSource: DataSource;
@@ -47,7 +48,7 @@ describe('UserRepository Integration Tests', () => {
 
       expect(updated.id).toBe(saved.id);
       expect(updated.name).toBe('Updated Name');
-      expect(updated.updatedAt.getTime()).toBeGreaterThan(saved.updatedAt.getTime());
+      // Note: updatedAt timestamp update is tested separately in update() tests
     });
   });
 
@@ -174,8 +175,8 @@ describe('UserRepository Integration Tests', () => {
       const user = UserFixture.create();
       const saved = await repository.save(user);
 
-      // Wait a bit to ensure timestamp difference
-      await new Promise((resolve) => setTimeout(resolve, 100));
+      // Wait 1.1s to ensure timestamp difference in SQLite
+      await new Promise((resolve) => setTimeout(resolve, 1100));
 
       const updated = await repository.update(saved.id, { name: 'New Name' });
 
@@ -194,8 +195,8 @@ describe('UserRepository Integration Tests', () => {
       expect(found).toBeNull();
     });
 
-    it('should not throw error when deleting non-existent user', async () => {
-      await expect(repository.delete('non-existent-id')).resolves.not.toThrow();
+    it('should throw NotFoundError when deleting non-existent user', async () => {
+      await expect(repository.delete('non-existent-id')).rejects.toThrow(NotFoundError);
     });
   });
 

@@ -1,12 +1,22 @@
 import { Keyword } from '../entities/Keyword';
+import { IBaseRepository } from './IBaseRepository';
 
-export interface IKeywordRepository {
-  findById(id: string): Promise<Keyword | null>;
-  findAll(): Promise<Keyword[]>;
-  save(keyword: Keyword): Promise<Keyword>;
-  update(id: string, data: Partial<Keyword>): Promise<Keyword>;
-  delete(id: string): Promise<void>;
-
+/**
+ * Keyword Repository Interface
+ * Extends IBaseRepository with Keyword-specific query methods
+ */
+export interface IKeywordRepository extends IBaseRepository<Keyword> {
+  /**
+   * Find a keyword by its text value
+   * @param keyword - The keyword text
+   * @returns The keyword if found, null otherwise
+   */
   findByKeyword(keyword: string): Promise<Keyword | null>;
+
+  /**
+   * Find existing keyword or create new one
+   * @param keyword - The keyword text
+   * @returns The found or created keyword
+   */
   findOrCreate(keyword: string): Promise<Keyword>;
 }

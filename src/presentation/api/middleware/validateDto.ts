@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { plainToInstance } from 'class-transformer';
 import { validate, ValidationError as ClassValidatorError } from 'class-validator';
-import { ValidationError } from '../utils/errors';
+import { ValidationError } from '@application/errors/HttpError';
 
 type ClassType<T> = new (...args: any[]) => T;
 

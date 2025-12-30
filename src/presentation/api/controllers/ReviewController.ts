@@ -2,15 +2,18 @@ import { Request, Response, NextFunction } from 'express';
 import { RecordReviewUseCase } from '@application/usecases/tracking/review/RecordReviewUseCase';
 import { GetPlaceReviewsUseCase } from '@application/usecases/tracking/review/GetPlaceReviewsUseCase';
 import { GetReviewsBySentimentUseCase } from '@application/usecases/tracking/review/GetReviewsBySentimentUseCase';
+import { ScrapeReviewsUseCase } from '@application/usecases/tracking/review/ScrapeReviewsUseCase';
 import { RecordReviewDto } from '@application/dtos/tracking/review/RecordReviewDto';
 import { GetReviewsDto } from '@application/dtos/tracking/review/GetReviewsDto';
-import { BadRequestError } from '../utils/errors';
+import { ScrapeReviewsDto } from '@application/dtos/tracking/review/ScrapeReviewsDto';
+import { BadRequestError } from '@application/errors/HttpError';
 
 export class ReviewController {
   constructor(
     private readonly recordReviewUseCase: RecordReviewUseCase,
     private readonly getPlaceReviewsUseCase: GetPlaceReviewsUseCase,
-    private readonly getReviewsBySentimentUseCase: GetReviewsBySentimentUseCase
+    private readonly getReviewsBySentimentUseCase: GetReviewsBySentimentUseCase,
+    private readonly scrapeReviewsUseCase: ScrapeReviewsUseCase
   ) {}
 
   /**
@@ -97,6 +100,29 @@ export class ReviewController {
       res.status(200).json({
         success: true,
         data: result,
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  /**
+   * POST /api/reviews/scrape
+   * Trigger Naver review scraping for a Place
+   */
+  scrapeReviews = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      const dto: ScrapeReviewsDto = req.body;
+      const result = await this.scrapeReviewsUseCase.execute(dto);
+
+      res.status(201).json({
+        success: true,
+        data: result,
+        message: `Scraped ${result.scrapedCount} reviews: ${result.savedCount} saved, ${result.duplicateCount} duplicates, ${result.failedCount} failed`,
       });
     } catch (error) {
       next(error);

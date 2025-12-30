@@ -1,6 +1,8 @@
 import { DataSource, Repository } from 'typeorm';
 import { IUserRepository } from '@domain/repositories/IUserRepository';
+import { PaginationOptions, PaginatedResult } from '@domain/repositories/IBaseRepository';
 import { User } from '@domain/entities/User';
+import { NotFoundError } from '@application/errors/HttpError';
 
 export class UserRepository implements IUserRepository {
   private readonly repository: Repository<User>;
@@ -13,8 +15,25 @@ export class UserRepository implements IUserRepository {
     return this.repository.findOne({ where: { id } });
   }
 
-  async findAll(): Promise<User[]> {
-    return this.repository.find();
+  async findAll(options: PaginationOptions = {}): Promise<PaginatedResult<User>> {
+    const { page = 1, limit = 10, sortBy = 'createdAt', sortOrder = 'DESC' } = options;
+    const skip = (page - 1) * limit;
+
+    const [data, total] = await this.repository.findAndCount({
+      skip,
+      take: limit,
+      order: { [sortBy]: sortOrder },
+    });
+
+    return {
+      data,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
   }
 
   async save(user: User): Promise<User> {
@@ -22,24 +41,42 @@ export class UserRepository implements IUserRepository {
   }
 
   async update(id: string, data: Partial<User>): Promise<User> {
-    await this.repository.update(id, data);
-    const updated = await this.findById(id);
-    if (!updated) {
-      throw new Error(`User with id ${id} not found`);
+    const exists = await this.exists(id);
+    if (!exists) {
+      throw new NotFoundError(`User with id ${id} not found`);
     }
-    return updated;
+    await this.repository.update(id, data);
+    return (await this.findById(id))!;
   }
 
   async delete(id: string): Promise<void> {
+    const exists = await this.exists(id);
+    if (!exists) {
+      throw new NotFoundError(`User with id ${id} not found`);
+    }
     await this.repository.delete(id);
   }
 
+  async exists(id: string): Promise<boolean> {
+    return this.repository.exist({ where: { id } });
+  }
+
+  async count(): Promise<number> {
+    return this.repository.count();
+  }
+
   async findByEmail(email: string): Promise<User | null> {
-    return this.repository.findOne({ where: { email } });
+    return this.repository
+      .createQueryBuilder('user')
+      .where('LOWER(user.email) = LOWER(:email)', { email })
+      .getOne();
   }
 
   async existsByEmail(email: string): Promise<boolean> {
-    const count = await this.repository.count({ where: { email } });
+    const count = await this.repository
+      .createQueryBuilder('user')
+      .where('LOWER(user.email) = LOWER(:email)', { email })
+      .getCount();
     return count > 0;
   }
 }

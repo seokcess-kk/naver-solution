@@ -5,7 +5,7 @@ import { GetCompetitorHistoryUseCase } from '@application/usecases/tracking/comp
 import { AddCompetitorDto } from '@application/dtos/tracking/competitor/AddCompetitorDto';
 import { RecordCompetitorSnapshotDto } from '@application/dtos/tracking/competitor/RecordCompetitorSnapshotDto';
 import { GetCompetitorHistoryDto } from '@application/dtos/tracking/competitor/GetCompetitorHistoryDto';
-import { BadRequestError } from '../utils/errors';
+import { BadRequestError } from '@application/errors/HttpError';
 
 export class CompetitorController {
   constructor(

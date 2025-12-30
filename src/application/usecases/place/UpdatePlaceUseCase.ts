@@ -2,6 +2,7 @@ import { IPlaceRepository } from '@domain/repositories/IPlaceRepository';
 import { UpdatePlaceDto } from '@application/dtos/place/UpdatePlaceDto';
 import { PlaceResponseDto } from '@application/dtos/place/PlaceResponseDto';
 import { Place } from '@domain/entities/Place';
+import { NotFoundError } from '@application/errors/HttpError';
 
 export class UpdatePlaceUseCase {
   constructor(private readonly placeRepository: IPlaceRepository) {}
@@ -10,7 +11,7 @@ export class UpdatePlaceUseCase {
     // 1. Validate place exists
     const place = await this.placeRepository.findById(id);
     if (!place) {
-      throw new Error('Place not found');
+      throw new NotFoundError(`Place with id ${id} not found`);
     }
 
     // 2. Build update data (only include provided fields)

@@ -12,6 +12,7 @@ import { CompetitorRepository } from '@infrastructure/repositories/CompetitorRep
 import { CompetitorSnapshotRepository } from '@infrastructure/repositories/CompetitorSnapshotRepository';
 import { NotificationSettingRepository } from '@infrastructure/repositories/NotificationSettingRepository';
 import { NotificationLogRepository } from '@infrastructure/repositories/NotificationLogRepository';
+import { RefreshTokenRepository } from '@infrastructure/repositories/RefreshTokenRepository';
 
 // Place Use Cases
 import { CreatePlaceUseCase } from '@application/usecases/place/CreatePlaceUseCase';
@@ -25,11 +26,13 @@ import { DeletePlaceUseCase } from '@application/usecases/place/DeletePlaceUseCa
 import { RecordRankingUseCase } from '@application/usecases/tracking/ranking/RecordRankingUseCase';
 import { GetRankingHistoryUseCase } from '@application/usecases/tracking/ranking/GetRankingHistoryUseCase';
 import { GetLatestRankingUseCase } from '@application/usecases/tracking/ranking/GetLatestRankingUseCase';
+import { ScrapeRankingUseCase } from '@application/usecases/tracking/ranking/ScrapeRankingUseCase';
 
 // Review Use Cases
 import { RecordReviewUseCase } from '@application/usecases/tracking/review/RecordReviewUseCase';
 import { GetPlaceReviewsUseCase } from '@application/usecases/tracking/review/GetPlaceReviewsUseCase';
 import { GetReviewsBySentimentUseCase } from '@application/usecases/tracking/review/GetReviewsBySentimentUseCase';
+import { ScrapeReviewsUseCase } from '@application/usecases/tracking/review/ScrapeReviewsUseCase';
 
 // Review History Use Cases
 import { RecordReviewHistoryUseCase } from '@application/usecases/tracking/review-history/RecordReviewHistoryUseCase';
@@ -41,16 +44,39 @@ import { AddCompetitorUseCase } from '@application/usecases/tracking/competitor/
 import { RecordCompetitorSnapshotUseCase } from '@application/usecases/tracking/competitor/RecordCompetitorSnapshotUseCase';
 import { GetCompetitorHistoryUseCase } from '@application/usecases/tracking/competitor/GetCompetitorHistoryUseCase';
 
+// Auth Services
+import { PasswordHashService } from '@infrastructure/auth/PasswordHashService';
+import { JwtAuthService } from '@infrastructure/auth/JwtAuthService';
+import { IPasswordHashService } from '@domain/services/IPasswordHashService';
+import { IJwtAuthService } from '@domain/services/IJwtAuthService';
+
+// Naver Services
+import { NaverScrapingService } from '@infrastructure/naver/NaverScrapingService';
+import { INaverScrapingService } from '@infrastructure/naver/interfaces/INaverScrapingService';
+
+// Auth Use Cases
+import {
+  RegisterUserUseCase,
+  LoginUseCase,
+  RefreshTokenUseCase,
+  GetUserProfileUseCase,
+  LogoutUseCase,
+} from '@application/usecases/auth';
+
+// Service Registry
+import { ServiceRegistry, ServiceName } from './ServiceRegistry';
+
 /**
  * Dependency Injection Container
- * Manages singleton instances of repositories and use cases
+ * Manages singleton instances of repositories, services, and use cases.
+ * Uses ServiceRegistry for compile-time type safety and IDE autocomplete.
  */
 export class DIContainer {
   private static instance: DIContainer;
-  private repositories: Map<string, any> = new Map();
-  private useCases: Map<string, any> = new Map();
+  private services: Map<ServiceName, any> = new Map();
 
   private constructor(dataSource: DataSource) {
+    this.initializeServices();
     this.initializeRepositories(dataSource);
     this.initializeUseCases();
   }
@@ -66,31 +92,59 @@ export class DIContainer {
   }
 
   /**
-   * Get a use case or repository by key
+   * Get a service by name with compile-time type safety
+   * @param name - The service name (must be a valid key in ServiceRegistry)
+   * @returns The service instance with the correct type
+   * @throws Error if service is not found in container
+   *
+   * @example
+   * const userRepo = container.get('UserRepository'); // Type: IUserRepository
+   * const loginUseCase = container.get('LoginUseCase'); // Type: LoginUseCase
    */
-  public get<T>(key: string): T {
-    const instance = this.useCases.get(key) || this.repositories.get(key);
-    if (!instance) {
-      throw new Error(`Dependency not found: ${key}`);
+  public get<K extends ServiceName>(name: K): ServiceRegistry[K] {
+    const service = this.services.get(name);
+    if (!service) {
+      throw new Error(`Service not found in container: ${name}`);
     }
-    return instance as T;
+    return service as ServiceRegistry[K];
+  }
+
+  /**
+   * Get container statistics for debugging
+   * @returns Object containing total service count and list of all service names
+   */
+  public getStats() {
+    return {
+      totalServices: this.services.size,
+      services: Array.from(this.services.keys()).sort(),
+    };
+  }
+
+  /**
+   * Initialize all service instances
+   */
+  private initializeServices(): void {
+    this.services.set('PasswordHashService', new PasswordHashService() as IPasswordHashService);
+    this.services.set('JwtAuthService', new JwtAuthService() as IJwtAuthService);
+    this.services.set('NaverScrapingService', new NaverScrapingService() as INaverScrapingService);
   }
 
   /**
    * Initialize all repository instances
    */
   private initializeRepositories(dataSource: DataSource): void {
-    this.repositories.set('UserRepository', new UserRepository(dataSource));
-    this.repositories.set('PlaceRepository', new PlaceRepository(dataSource));
-    this.repositories.set('KeywordRepository', new KeywordRepository(dataSource));
-    this.repositories.set('PlaceKeywordRepository', new PlaceKeywordRepository(dataSource));
-    this.repositories.set('RankingHistoryRepository', new RankingHistoryRepository(dataSource));
-    this.repositories.set('ReviewHistoryRepository', new ReviewHistoryRepository(dataSource));
-    this.repositories.set('ReviewRepository', new ReviewRepository(dataSource));
-    this.repositories.set('CompetitorRepository', new CompetitorRepository(dataSource));
-    this.repositories.set('CompetitorSnapshotRepository', new CompetitorSnapshotRepository(dataSource));
-    this.repositories.set('NotificationSettingRepository', new NotificationSettingRepository(dataSource));
-    this.repositories.set('NotificationLogRepository', new NotificationLogRepository(dataSource));
+    this.services.set('UserRepository', new UserRepository(dataSource));
+    this.services.set('PlaceRepository', new PlaceRepository(dataSource));
+    this.services.set('KeywordRepository', new KeywordRepository(dataSource));
+    this.services.set('PlaceKeywordRepository', new PlaceKeywordRepository(dataSource));
+    this.services.set('RankingHistoryRepository', new RankingHistoryRepository(dataSource));
+    this.services.set('ReviewHistoryRepository', new ReviewHistoryRepository(dataSource));
+    this.services.set('ReviewRepository', new ReviewRepository(dataSource));
+    this.services.set('CompetitorRepository', new CompetitorRepository(dataSource));
+    this.services.set('CompetitorSnapshotRepository', new CompetitorSnapshotRepository(dataSource));
+    this.services.set('NotificationSettingRepository', new NotificationSettingRepository(dataSource));
+    this.services.set('NotificationLogRepository', new NotificationLogRepository(dataSource));
+    this.services.set('RefreshTokenRepository', new RefreshTokenRepository(dataSource));
   }
 
   /**
@@ -98,7 +152,7 @@ export class DIContainer {
    */
   private initializeUseCases(): void {
     // Place Use Cases
-    this.useCases.set(
+    this.services.set(
       'CreatePlaceUseCase',
       new CreatePlaceUseCase(
         this.get('PlaceRepository'),
@@ -106,12 +160,12 @@ export class DIContainer {
       )
     );
 
-    this.useCases.set(
+    this.services.set(
       'GetPlaceUseCase',
       new GetPlaceUseCase(this.get('PlaceRepository'))
     );
 
-    this.useCases.set(
+    this.services.set(
       'ListPlacesUseCase',
       new ListPlacesUseCase(
         this.get('PlaceRepository'),
@@ -119,23 +173,23 @@ export class DIContainer {
       )
     );
 
-    this.useCases.set(
+    this.services.set(
       'UpdatePlaceUseCase',
       new UpdatePlaceUseCase(this.get('PlaceRepository'))
     );
 
-    this.useCases.set(
+    this.services.set(
       'UpdatePlaceActiveStatusUseCase',
       new UpdatePlaceActiveStatusUseCase(this.get('PlaceRepository'))
     );
 
-    this.useCases.set(
+    this.services.set(
       'DeletePlaceUseCase',
       new DeletePlaceUseCase(this.get('PlaceRepository'))
     );
 
     // Ranking Use Cases
-    this.useCases.set(
+    this.services.set(
       'RecordRankingUseCase',
       new RecordRankingUseCase(
         this.get('RankingHistoryRepository'),
@@ -143,7 +197,7 @@ export class DIContainer {
       )
     );
 
-    this.useCases.set(
+    this.services.set(
       'GetRankingHistoryUseCase',
       new GetRankingHistoryUseCase(
         this.get('RankingHistoryRepository'),
@@ -151,7 +205,7 @@ export class DIContainer {
       )
     );
 
-    this.useCases.set(
+    this.services.set(
       'GetLatestRankingUseCase',
       new GetLatestRankingUseCase(
         this.get('RankingHistoryRepository'),
@@ -159,8 +213,17 @@ export class DIContainer {
       )
     );
 
+    this.services.set(
+      'ScrapeRankingUseCase',
+      new ScrapeRankingUseCase(
+        this.get('NaverScrapingService'),
+        this.get('PlaceKeywordRepository'),
+        this.get('RecordRankingUseCase')
+      )
+    );
+
     // Review Use Cases
-    this.useCases.set(
+    this.services.set(
       'RecordReviewUseCase',
       new RecordReviewUseCase(
         this.get('ReviewRepository'),
@@ -168,7 +231,7 @@ export class DIContainer {
       )
     );
 
-    this.useCases.set(
+    this.services.set(
       'GetPlaceReviewsUseCase',
       new GetPlaceReviewsUseCase(
         this.get('ReviewRepository'),
@@ -176,7 +239,7 @@ export class DIContainer {
       )
     );
 
-    this.useCases.set(
+    this.services.set(
       'GetReviewsBySentimentUseCase',
       new GetReviewsBySentimentUseCase(
         this.get('ReviewRepository'),
@@ -184,8 +247,18 @@ export class DIContainer {
       )
     );
 
+    this.services.set(
+      'ScrapeReviewsUseCase',
+      new ScrapeReviewsUseCase(
+        this.get('NaverScrapingService'),
+        this.get('PlaceRepository'),
+        this.get('ReviewRepository'),
+        this.get('RecordReviewUseCase')
+      )
+    );
+
     // Review History Use Cases
-    this.useCases.set(
+    this.services.set(
       'RecordReviewHistoryUseCase',
       new RecordReviewHistoryUseCase(
         this.get('ReviewHistoryRepository'),
@@ -193,7 +266,7 @@ export class DIContainer {
       )
     );
 
-    this.useCases.set(
+    this.services.set(
       'GetReviewHistoryUseCase',
       new GetReviewHistoryUseCase(
         this.get('ReviewHistoryRepository'),
@@ -201,7 +274,7 @@ export class DIContainer {
       )
     );
 
-    this.useCases.set(
+    this.services.set(
       'GetLatestReviewStatsUseCase',
       new GetLatestReviewStatsUseCase(
         this.get('ReviewHistoryRepository'),
@@ -210,7 +283,7 @@ export class DIContainer {
     );
 
     // Competitor Use Cases
-    this.useCases.set(
+    this.services.set(
       'AddCompetitorUseCase',
       new AddCompetitorUseCase(
         this.get('CompetitorRepository'),
@@ -218,7 +291,7 @@ export class DIContainer {
       )
     );
 
-    this.useCases.set(
+    this.services.set(
       'RecordCompetitorSnapshotUseCase',
       new RecordCompetitorSnapshotUseCase(
         this.get('CompetitorSnapshotRepository'),
@@ -226,12 +299,49 @@ export class DIContainer {
       )
     );
 
-    this.useCases.set(
+    this.services.set(
       'GetCompetitorHistoryUseCase',
       new GetCompetitorHistoryUseCase(
         this.get('CompetitorSnapshotRepository'),
         this.get('CompetitorRepository')
       )
+    );
+
+    // Auth Use Cases
+    this.services.set(
+      'RegisterUserUseCase',
+      new RegisterUserUseCase(
+        this.get('UserRepository'),
+        this.get('PasswordHashService')
+      )
+    );
+
+    this.services.set(
+      'LoginUseCase',
+      new LoginUseCase(
+        this.get('UserRepository'),
+        this.get('PasswordHashService'),
+        this.get('JwtAuthService'),
+        this.get('RefreshTokenRepository')
+      )
+    );
+
+    this.services.set(
+      'RefreshTokenUseCase',
+      new RefreshTokenUseCase(
+        this.get('RefreshTokenRepository'),
+        this.get('JwtAuthService')
+      )
+    );
+
+    this.services.set(
+      'GetUserProfileUseCase',
+      new GetUserProfileUseCase(this.get('UserRepository'))
+    );
+
+    this.services.set(
+      'LogoutUseCase',
+      new LogoutUseCase(this.get('RefreshTokenRepository'))
     );
   }
 }
