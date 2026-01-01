@@ -28,7 +28,7 @@ export class RankingHistory {
   @Column({ name: 'search_result_count', type: 'integer', nullable: true })
   searchResultCount: number | null;
 
-  @Column({ name: 'checked_at', type: 'timestamp' })
+  @Column({ name: 'checked_at', type: 'datetime' })
   checkedAt: Date;
 
   @CreateDateColumn({ name: 'created_at' })

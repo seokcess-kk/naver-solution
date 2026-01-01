@@ -23,7 +23,7 @@ export class RefreshToken {
   @Column({ name: 'token', type: 'varchar', length: 500, unique: true })
   token: string;
 
-  @Column({ name: 'expires_at', type: 'timestamp' })
+  @Column({ name: 'expires_at', type: 'datetime' })
   expiresAt: Date;
 
   @Column({ name: 'is_revoked', type: 'boolean', default: false })
@@ -35,6 +35,6 @@ export class RefreshToken {
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 
-  @Column({ name: 'revoked_at', type: 'timestamp', nullable: true })
+  @Column({ name: 'revoked_at', type: 'datetime', nullable: true })
   revokedAt: Date | null;
 }

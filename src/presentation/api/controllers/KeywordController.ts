@@ -4,7 +4,8 @@ import { GetPlaceKeywordsUseCase } from '@application/usecases/keyword/GetPlaceK
 import { AddPlaceKeywordUseCase } from '@application/usecases/keyword/AddPlaceKeywordUseCase';
 import { RemovePlaceKeywordUseCase } from '@application/usecases/keyword/RemovePlaceKeywordUseCase';
 import { AddPlaceKeywordDto } from '@application/dtos/keyword';
-import { BadRequestError } from '@application/errors/HttpError';
+import { BadRequestError, ValidationError } from '@application/errors/HttpError';
+import { validate as isUuid } from 'uuid';
 
 export class KeywordController {
   constructor(
@@ -16,7 +17,7 @@ export class KeywordController {
 
   /**
    * GET /api/keywords
-   * List all keywords
+   * List all keywords with pagination
    */
   listKeywords = async (
     req: Request,
@@ -24,7 +25,17 @@ export class KeywordController {
     next: NextFunction
   ): Promise<void> => {
     try {
-      const result = await this.listKeywordsUseCase.execute();
+      const page = req.query.page ? parseInt(req.query.page as string, 10) : undefined;
+      const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : undefined;
+      const sortBy = req.query.sortBy as string | undefined;
+      const sortOrder = req.query.sortOrder as 'ASC' | 'DESC' | undefined;
+
+      const result = await this.listKeywordsUseCase.execute({
+        page,
+        limit,
+        sortBy,
+        sortOrder,
+      });
 
       res.status(200).json({
         success: true,
@@ -49,6 +60,10 @@ export class KeywordController {
 
       if (!placeId) {
         throw new BadRequestError('Place ID is required');
+      }
+
+      if (!isUuid(placeId)) {
+        throw new ValidationError('Invalid place ID format');
       }
 
       const result = await this.getPlaceKeywordsUseCase.execute(placeId);
@@ -99,6 +114,10 @@ export class KeywordController {
 
       if (!placeKeywordId) {
         throw new BadRequestError('PlaceKeyword ID is required');
+      }
+
+      if (!isUuid(placeKeywordId)) {
+        throw new ValidationError('Invalid placeKeyword ID format');
       }
 
       await this.removePlaceKeywordUseCase.execute(placeKeywordId);

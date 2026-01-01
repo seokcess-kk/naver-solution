@@ -12,7 +12,10 @@ export class PlaceKeywordRepository implements IPlaceKeywordRepository {
   }
 
   async findById(id: string): Promise<PlaceKeyword | null> {
-    return this.repository.findOne({ where: { id } });
+    return this.repository.findOne({
+      where: { id },
+      relations: ['place', 'keyword'],
+    });
   }
 
   async findAll(options: PaginationOptions = {}): Promise<PaginatedResult<PlaceKeyword>> {
