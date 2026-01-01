@@ -33,7 +33,7 @@ export class CompetitorSnapshot {
   @Column({ name: 'average_rating', type: 'decimal', precision: 2, scale: 1, nullable: true })
   averageRating: number | null;
 
-  @Column({ name: 'checked_at', type: 'datetime' })
+  @Column({ name: 'checked_at', type: 'timestamp' })
   checkedAt: Date;
 
   @CreateDateColumn({ name: 'created_at' })
