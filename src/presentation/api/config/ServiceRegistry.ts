@@ -26,6 +26,13 @@ import { ListPlacesUseCase } from '@application/usecases/place/ListPlacesUseCase
 import { UpdatePlaceUseCase } from '@application/usecases/place/UpdatePlaceUseCase';
 import { UpdatePlaceActiveStatusUseCase } from '@application/usecases/place/UpdatePlaceActiveStatusUseCase';
 import { DeletePlaceUseCase } from '@application/usecases/place/DeletePlaceUseCase';
+import { GetPlaceStatsUseCase } from '@application/usecases/place/GetPlaceStatsUseCase';
+
+// Keyword Use Cases
+import { ListKeywordsUseCase } from '@application/usecases/keyword/ListKeywordsUseCase';
+import { GetPlaceKeywordsUseCase } from '@application/usecases/keyword/GetPlaceKeywordsUseCase';
+import { AddPlaceKeywordUseCase } from '@application/usecases/keyword/AddPlaceKeywordUseCase';
+import { RemovePlaceKeywordUseCase } from '@application/usecases/keyword/RemovePlaceKeywordUseCase';
 
 // Ranking Use Cases
 import { RecordRankingUseCase } from '@application/usecases/tracking/ranking/RecordRankingUseCase';
@@ -96,6 +103,15 @@ export interface ServiceRegistry {
   UpdatePlaceUseCase: UpdatePlaceUseCase;
   UpdatePlaceActiveStatusUseCase: UpdatePlaceActiveStatusUseCase;
   DeletePlaceUseCase: DeletePlaceUseCase;
+  GetPlaceStatsUseCase: GetPlaceStatsUseCase;
+
+  // ============================================
+  // Keyword Use Cases
+  // ============================================
+  ListKeywordsUseCase: ListKeywordsUseCase;
+  GetPlaceKeywordsUseCase: GetPlaceKeywordsUseCase;
+  AddPlaceKeywordUseCase: AddPlaceKeywordUseCase;
+  RemovePlaceKeywordUseCase: RemovePlaceKeywordUseCase;
 
   // ============================================
   // Ranking Use Cases

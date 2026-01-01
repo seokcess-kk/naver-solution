@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { loginSchema, type LoginFormData } from '@/lib/validations/auth';
 import { useAuth } from '@/lib/hooks/useAuth';
+import type { ApiErrorResponse } from '@/types/api';
 
 export function LoginForm() {
   const router = useRouter();
@@ -28,9 +29,12 @@ export function LoginForm() {
 
     try {
       await login(data.email, data.password);
+      // persist 미들웨어가 localStorage에 저장할 시간 확보
+      await new Promise(resolve => setTimeout(resolve, 50));
       router.push('/dashboard');
-    } catch (err: any) {
-      setError(err.response?.data?.error?.message || '로그인에 실패했습니다');
+    } catch (err) {
+      const error = err as ApiErrorResponse;
+      setError(error.response?.data?.error?.message || '로그인에 실패했습니다');
     } finally {
       setIsLoading(false);
     }

@@ -21,12 +21,16 @@ export function createPlaceRoutes(container: DIContainer): Router {
     container.get('ListPlacesUseCase'),
     container.get('UpdatePlaceUseCase'),
     container.get('UpdatePlaceActiveStatusUseCase'),
-    container.get('DeletePlaceUseCase')
+    container.get('DeletePlaceUseCase'),
+    container.get('GetPlaceStatsUseCase')
   );
 
   // All routes require authentication
   // POST /api/places - Create a new place
   router.post('/', authMiddleware, validateDto(CreatePlaceDto), controller.createPlace);
+
+  // GET /api/places/stats - Get place statistics
+  router.get('/stats', authMiddleware, controller.getPlaceStats);
 
   // GET /api/places - List all places for a user
   router.get('/', authMiddleware, controller.listPlaces);

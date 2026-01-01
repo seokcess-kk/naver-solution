@@ -34,4 +34,18 @@ export interface IPlaceRepository extends IBaseRepository<Place> {
    * @param isActive - The new active status
    */
   updateActiveStatus(id: string, isActive: boolean): Promise<void>;
+
+  /**
+   * Count total places for a specific user
+   * @param userId - The user ID
+   * @returns Total count of places
+   */
+  countByUserId(userId: string): Promise<number>;
+
+  /**
+   * Count active places for a specific user
+   * @param userId - The user ID
+   * @returns Count of active places
+   */
+  countActiveByUserId(userId: string): Promise<number>;
 }

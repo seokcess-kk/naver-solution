@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { QueryProvider } from "@/lib/providers/QueryProvider";
+import { AuthHydrationProvider } from "@/lib/providers/AuthHydrationProvider";
+import { Toaster } from "sonner";
 
 export const metadata: Metadata = {
   title: "Naver Place Monitor",
@@ -13,7 +16,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ko">
-      <body>{children}</body>
+      <body>
+        <QueryProvider>
+          <AuthHydrationProvider>{children}</AuthHydrationProvider>
+        </QueryProvider>
+        <Toaster position="top-right" richColors />
+      </body>
     </html>
   );
 }

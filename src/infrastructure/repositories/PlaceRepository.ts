@@ -103,4 +103,16 @@ export class PlaceRepository implements IPlaceRepository {
   async updateActiveStatus(id: string, isActive: boolean): Promise<void> {
     await this.repository.update(id, { isActive });
   }
+
+  async countByUserId(userId: string): Promise<number> {
+    return this.repository.count({
+      where: { user: { id: userId } },
+    });
+  }
+
+  async countActiveByUserId(userId: string): Promise<number> {
+    return this.repository.count({
+      where: { user: { id: userId }, isActive: true },
+    });
+  }
 }

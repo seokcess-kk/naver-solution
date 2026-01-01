@@ -14,6 +14,9 @@ export function useAuth(requireAuth: boolean = false) {
   } = useAuthStore();
 
   useEffect(() => {
+    // AuthHydrationProvider가 hydration을 처리하므로
+    // 여기서는 _hasHydrated 체크 불필요
+
     // 인증 필요한 페이지인데 로그인 안 되어 있으면 로그인 페이지로 리다이렉트
     if (requireAuth && !isAuthenticated) {
       router.push('/login');

@@ -4,7 +4,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a **Naver Place Monitoring System** built with TypeScript, Express, TypeORM, and PostgreSQL. The application monitors Naver Place rankings, reviews, and competitor data for businesses, providing automated tracking and notification capabilities.
+This is a **Naver Place Monitoring System** built with TypeScript, Express, TypeORM, PostgreSQL, and Next.js. The application monitors Naver Place rankings, reviews, and competitor data for businesses, providing automated tracking and notification capabilities.
+
+## Project Structure
+
+This is a monorepo containing both backend and frontend:
+
+- **Root directory**: Backend (Express + TypeORM + PostgreSQL)
+- **`web/` directory**: Frontend (Next.js + React)
+
+Both applications work together to provide a full-stack monitoring solution.
 
 ## Common Development Commands
 
@@ -18,6 +27,10 @@ npm run dev                # Run in development mode with ts-node
 ### Testing
 ```bash
 npm test                   # Run all tests
+npm run test:unit          # Run unit tests only
+npm run test:integration   # Run integration tests only
+npm run test:e2e           # Run E2E API tests only
+npm run test:e2e:watch     # Run E2E tests in watch mode
 npm run test:watch         # Run tests in watch mode
 npm run test:coverage      # Generate coverage report
 ```
@@ -59,6 +72,7 @@ src/
 │   └── usecases/       # Use case implementations
 │       ├── auth/       # User authentication (register, login, refresh, logout)
 │       ├── place/      # Place management
+│       ├── keyword/    # Keyword management
 │       └── tracking/   # Ranking/review tracking
 │           ├── ranking/
 │           ├── review/
@@ -96,6 +110,98 @@ Use TypeScript path aliases to reference layers:
 - `@application/*` → `src/application/*`
 - `@infrastructure/*` → `src/infrastructure/*`
 - `@presentation/*` → `src/presentation/*`
+- `@tests/*` → `tests/*`
+
+## Frontend (Next.js)
+
+The `web/` directory contains a Next.js frontend application that consumes the backend API.
+
+### Technology Stack
+
+- **Next.js 16**: App Router with React Server Components
+- **React 19**: Latest React with concurrent features
+- **TypeScript**: Full type safety across the application
+- **Tailwind CSS + shadcn/ui**: Utility-first CSS with pre-built components
+- **Zustand**: Lightweight client-side state management
+- **React Query (@tanstack/react-query)**: Server state management and caching
+- **Zod**: Schema validation for forms and API responses
+- **React Hook Form**: Form handling with validation
+- **Axios**: HTTP client with interceptors for authentication
+
+### Directory Structure
+
+```
+web/
+├── app/                 # Next.js App Router
+│   ├── (auth)/         # Route group for authentication pages
+│   │   ├── login/      # Login page
+│   │   └── register/   # Registration page
+│   ├── (dashboard)/    # Route group for authenticated pages
+│   │   ├── dashboard/  # Main dashboard
+│   │   └── places/     # Place management pages
+│   │       ├── page.tsx                         # List all places
+│   │       ├── new/page.tsx                     # Create new place
+│   │       ├── [id]/page.tsx                    # View place details
+│   │       ├── [id]/edit/page.tsx              # Edit place
+│   │       └── [id]/keywords/[keywordId]/rankings/page.tsx  # Ranking data
+│   ├── layout.tsx      # Root layout
+│   └── page.tsx        # Home page
+│
+├── components/          # Reusable React components
+│   ├── auth/           # Authentication components (LoginForm, RegisterForm)
+│   ├── places/         # Place management components (PlaceForm)
+│   └── ui/             # shadcn/ui components (button, input, form, etc.)
+│
+├── lib/                # Utilities and core logic
+│   ├── api/            # API client configuration
+│   │   ├── client.ts   # Axios instance with interceptors
+│   │   ├── auth.ts     # Authentication API calls
+│   │   ├── place.ts    # Place API calls
+│   │   ├── keyword.ts  # Keyword API calls
+│   │   └── ranking.ts  # Ranking API calls
+│   ├── stores/         # Zustand stores
+│   │   └── authStore.ts # Authentication state (persisted to localStorage)
+│   ├── hooks/          # Custom React hooks
+│   │   └── useAuth.ts  # Authentication hook with hydration handling
+│   ├── validations/    # Zod schemas
+│   │   ├── auth.ts     # Auth validation schemas
+│   │   └── place.ts    # Place validation schemas
+│   ├── providers/      # React context providers
+│   │   └── QueryProvider.tsx # React Query provider
+│   └── utils.ts        # Utility functions
+│
+└── types/              # TypeScript type definitions
+    └── api.ts          # API response types
+```
+
+### Authentication Flow
+
+- **JWT-based authentication** with access and refresh tokens
+- **Axios interceptors** automatically attach access tokens to requests
+- **Automatic token refresh**: On 401 errors, interceptor attempts to refresh using refresh token
+- **Client-side route protection**: `useRequireAuth` hook in protected pages redirects unauthenticated users
+- **Token storage**: Tokens stored in localStorage (access and refresh tokens) via Zustand persist middleware
+- **Hydration handling**: `authStore` tracks `_hasHydrated` to prevent SSR/client mismatches
+- **Protected routes**: `/dashboard`, `/places/*`
+- **Public routes**: `/login`, `/register`
+
+### Development Commands
+
+```bash
+cd web                  # Navigate to frontend directory
+npm run dev             # Start development server (default: http://localhost:3001)
+npm run build           # Build for production
+npm start               # Start production server
+npm run lint            # Run ESLint
+```
+
+### Key Patterns
+
+- **Route Groups**: Uses `(auth)` and `(dashboard)` to organize routes without affecting URLs
+- **Server/Client Components**: Leverages RSC where possible, marks interactive components with `'use client'`
+- **API Integration**: All API calls go through `lib/api/client.ts` with automatic auth handling
+- **Form Validation**: Zod schemas in `lib/validations/` used with React Hook Form
+- **State Management**: Zustand for client state (auth, UI), React Query for server state (data fetching)
 
 ## Database Schema
 
@@ -144,14 +250,24 @@ The system uses PostgreSQL with 11 core tables:
 
 ## Environment Setup
 
+### Backend (.env)
+
 Copy `.env.example` to `.env` and configure:
 - PostgreSQL connection (DB_HOST, DB_PORT, DB_USERNAME, DB_PASSWORD, DB_DATABASE)
 - JWT settings (JWT_SECRET, JWT_ACCESS_EXPIRES_IN, JWT_REFRESH_EXPIRES_IN)
 - Security (BCRYPT_SALT_ROUNDS)
+- Application (PORT, NODE_ENV)
 - SMTP for email notifications
 - Slack webhook URL for Slack notifications
 - Redis connection (optional, for caching)
 - Naver scraping configuration (PUPPETEER_HEADLESS, PUPPETEER_TIMEOUT, etc.)
+
+### Frontend (web/.env.local)
+
+Create `web/.env.local` for frontend environment variables:
+- `NEXT_PUBLIC_API_URL`: Backend API URL (default: http://localhost:3000/api)
+
+Note: Variables prefixed with `NEXT_PUBLIC_` are exposed to the browser.
 
 ## Development Workflow
 
@@ -161,6 +277,7 @@ Copy `.env.example` to `.env` and configure:
 4. **Repository Pattern**: Infrastructure repositories implement domain interfaces
 5. **DTO Validation**: Use class-validator decorators on DTOs
 6. **Testing**: Jest is configured with ts-jest; tests go in `tests/` or `*.test.ts` files
+7. **Full-Stack Development**: Run backend (`npm run dev`) and frontend (`cd web && npm run dev`) in separate terminals
 
 ## Important Patterns
 

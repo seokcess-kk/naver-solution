@@ -8,6 +8,7 @@ interface AuthState {
   accessToken: string | null;
   refreshToken: string | null;
   isAuthenticated: boolean;
+  _hasHydrated: boolean;
 
   // Actions
   login: (email: string, password: string) => Promise<void>;
@@ -17,6 +18,7 @@ interface AuthState {
   setTokens: (accessToken: string, refreshToken: string) => void;
   setUser: (user: User) => void;
   clearAuth: () => void;
+  setHasHydrated: (state: boolean) => void;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -26,6 +28,7 @@ export const useAuthStore = create<AuthState>()(
       accessToken: null,
       refreshToken: null,
       isAuthenticated: false,
+      _hasHydrated: false,
 
       // 로그인
       login: async (email: string, password: string) => {
@@ -35,12 +38,7 @@ export const useAuthStore = create<AuthState>()(
           if (response.success && response.data) {
             const { accessToken, refreshToken, user } = response.data;
 
-            // 토큰 저장 (localStorage에도 저장 - API 클라이언트에서 사용)
-            if (typeof window !== 'undefined') {
-              localStorage.setItem('accessToken', accessToken);
-              localStorage.setItem('refreshToken', refreshToken);
-            }
-
+            // Zustand 상태 업데이트 (Zustand persist가 자동으로 localStorage 저장)
             set({
               user,
               accessToken,
@@ -50,7 +48,7 @@ export const useAuthStore = create<AuthState>()(
           } else {
             throw new Error(response.error?.message || '로그인 실패');
           }
-        } catch (error: any) {
+        } catch (error) {
           console.error('Login error:', error);
           throw error;
         }
@@ -67,7 +65,7 @@ export const useAuthStore = create<AuthState>()(
 
           // 회원가입 성공 후 자동 로그인
           await get().login(email, password);
-        } catch (error: any) {
+        } catch (error) {
           console.error('Register error:', error);
           throw error;
         }
@@ -102,10 +100,6 @@ export const useAuthStore = create<AuthState>()(
           if (response.success && response.data) {
             const { accessToken } = response.data;
 
-            if (typeof window !== 'undefined') {
-              localStorage.setItem('accessToken', accessToken);
-            }
-
             set({ accessToken });
           } else {
             throw new Error('Token refresh failed');
@@ -134,25 +128,40 @@ export const useAuthStore = create<AuthState>()(
 
       // 인증 정보 초기화
       clearAuth: () => {
-        if (typeof window !== 'undefined') {
-          localStorage.removeItem('accessToken');
-          localStorage.removeItem('refreshToken');
-        }
-
+        // Zustand 상태 초기화
         set({
           user: null,
           accessToken: null,
           refreshToken: null,
           isAuthenticated: false,
         });
+
+        // localStorage 완전히 클리어
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('accessToken');
+          localStorage.removeItem('refreshToken');
+          localStorage.removeItem('auth-storage');
+        }
+      },
+
+      // Set hydration state
+      setHasHydrated: (state: boolean) => {
+        set({ _hasHydrated: state });
       },
     }),
     {
       name: 'auth-storage',
       partialize: (state) => ({
         user: state.user,
+        accessToken: state.accessToken,
+        refreshToken: state.refreshToken,
         isAuthenticated: state.isAuthenticated,
+        // _hasHydrated는 persist 하지 않음
       }),
+      onRehydrateStorage: () => (state) => {
+        // localStorage 복원 완료 후 호출됨
+        state?.setHasHydrated(true);
+      },
     }
   )
 );

@@ -1,5 +1,5 @@
 // API Response 타입
-export interface ApiResponse<T = any> {
+export interface ApiResponse<T = unknown> {
   success: boolean;
   data?: T;
   error?: ApiError;
@@ -13,6 +13,18 @@ export interface ApiError {
     field: string;
     errors: string[];
   }>;
+}
+
+// Axios 에러 응답 타입
+export interface ApiErrorResponse {
+  response?: {
+    data?: {
+      message?: string;
+      error?: ApiError;
+    };
+    status?: number;
+  };
+  message: string;
 }
 
 export interface PaginatedResponse<T> {
@@ -45,4 +57,97 @@ export interface RegisterResponse {
   email: string;
   name: string;
   createdAt: string;
+}
+
+// Place 타입
+export interface Place {
+  id: string;
+  naverPlaceId: string;
+  name: string;
+  category: string | null;
+  address: string | null;
+  naverPlaceUrl: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+  userId?: string;
+  keywordCount?: number;
+  reviewCount?: number;
+}
+
+export interface CreatePlaceInput {
+  naverPlaceId: string;
+  name: string;
+  category?: string;
+  address?: string;
+  naverPlaceUrl: string;
+  userId: string;
+}
+
+export interface UpdatePlaceInput {
+  naverPlaceId?: string;
+  name?: string;
+  category?: string;
+  address?: string;
+  naverPlaceUrl?: string;
+}
+
+export interface PlaceStats {
+  totalPlaces: number;
+  activePlaces: number;
+  inactivePlaces: number;
+}
+
+// Keyword 타입
+export interface Keyword {
+  id: string;
+  keyword: string;
+  createdAt: string;
+  placeCount?: number;
+}
+
+export interface PlaceKeyword {
+  id: string;
+  placeId: string;
+  placeName: string;
+  keywordId: string;
+  keyword: string;
+  region: string | null;
+  isActive: boolean;
+  createdAt: string;
+}
+
+export interface AddPlaceKeywordInput {
+  placeId: string;
+  keyword: string;
+  region?: string;
+}
+
+// RankingHistory 타입
+export interface RankingHistory {
+  id: string;
+  placeKeywordId: string;
+  rank: number | null;
+  searchResultCount: number | null;
+  checkedAt: string;
+  createdAt: string;
+  placeName?: string;
+  keywordText?: string;
+  region?: string | null;
+}
+
+export interface RecordRankingInput {
+  placeKeywordId: string;
+  rank: number | null;
+  searchResultCount: number | null;
+  checkedAt: string;
+}
+
+export interface ScrapeRankingInput {
+  placeKeywordId: string;
+}
+
+export interface ScrapeRankingResponse {
+  rankingHistory: RankingHistory;
+  message: string;
 }

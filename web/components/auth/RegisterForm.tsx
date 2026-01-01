@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { registerSchema, type RegisterFormData } from '@/lib/validations/auth';
 import { useAuth } from '@/lib/hooks/useAuth';
+import type { ApiErrorResponse } from '@/types/api';
 
 export function RegisterForm() {
   const router = useRouter();
@@ -29,8 +30,9 @@ export function RegisterForm() {
     try {
       await registerUser(data.email, data.password, data.name);
       router.push('/dashboard');
-    } catch (err: any) {
-      setError(err.response?.data?.error?.message || '회원가입에 실패했습니다');
+    } catch (err) {
+      const error = err as ApiErrorResponse;
+      setError(error.response?.data?.error?.message || '회원가입에 실패했습니다');
     } finally {
       setIsLoading(false);
     }

@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { DIContainer } from '../config/DIContainer';
 import { createAuthRoutes } from './authRoutes';
 import { createPlaceRoutes } from './placeRoutes';
+import { createKeywordRoutes } from './keywordRoutes';
 import { createRankingRoutes } from './rankingRoutes';
 import { createReviewRoutes } from './reviewRoutes';
 import { createReviewHistoryRoutes } from './reviewHistoryRoutes';
@@ -18,6 +19,7 @@ export function createApiRoutes(container: DIContainer): Router {
   // and creates its own controller and middleware instances
   router.use('/auth', createAuthRoutes(container));
   router.use('/places', createPlaceRoutes(container));
+  router.use('/keywords', createKeywordRoutes(container));
   router.use('/rankings', createRankingRoutes(container));
   router.use('/reviews', createReviewRoutes(container));
   router.use('/review-history', createReviewHistoryRoutes(container));

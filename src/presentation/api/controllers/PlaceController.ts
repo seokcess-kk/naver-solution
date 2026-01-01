@@ -5,6 +5,7 @@ import { ListPlacesUseCase } from '@application/usecases/place/ListPlacesUseCase
 import { UpdatePlaceUseCase } from '@application/usecases/place/UpdatePlaceUseCase';
 import { UpdatePlaceActiveStatusUseCase } from '@application/usecases/place/UpdatePlaceActiveStatusUseCase';
 import { DeletePlaceUseCase } from '@application/usecases/place/DeletePlaceUseCase';
+import { GetPlaceStatsUseCase } from '@application/usecases/place/GetPlaceStatsUseCase';
 import { CreatePlaceDto } from '@application/dtos/place/CreatePlaceDto';
 import { UpdatePlaceDto } from '@application/dtos/place/UpdatePlaceDto';
 import { UpdatePlaceActiveStatusDto } from '@application/dtos/place/UpdatePlaceActiveStatusDto';
@@ -17,7 +18,8 @@ export class PlaceController {
     private readonly listPlacesUseCase: ListPlacesUseCase,
     private readonly updatePlaceUseCase: UpdatePlaceUseCase,
     private readonly updatePlaceActiveStatusUseCase: UpdatePlaceActiveStatusUseCase,
-    private readonly deletePlaceUseCase: DeletePlaceUseCase
+    private readonly deletePlaceUseCase: DeletePlaceUseCase,
+    private readonly getPlaceStatsUseCase: GetPlaceStatsUseCase
   ) {}
 
   /**
@@ -196,6 +198,34 @@ export class PlaceController {
       res.status(200).json({
         success: true,
         message: 'Place deleted successfully',
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  /**
+   * GET /api/places/stats
+   * Get place statistics for a user
+   * Query params: userId (required)
+   */
+  getPlaceStats = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      const { userId } = req.query;
+
+      if (!userId || typeof userId !== 'string') {
+        throw new BadRequestError('userId query parameter is required');
+      }
+
+      const result = await this.getPlaceStatsUseCase.execute(userId);
+
+      res.status(200).json({
+        success: true,
+        data: result,
       });
     } catch (error) {
       next(error);

@@ -21,6 +21,13 @@ import { ListPlacesUseCase } from '@application/usecases/place/ListPlacesUseCase
 import { UpdatePlaceUseCase } from '@application/usecases/place/UpdatePlaceUseCase';
 import { UpdatePlaceActiveStatusUseCase } from '@application/usecases/place/UpdatePlaceActiveStatusUseCase';
 import { DeletePlaceUseCase } from '@application/usecases/place/DeletePlaceUseCase';
+import { GetPlaceStatsUseCase } from '@application/usecases/place/GetPlaceStatsUseCase';
+
+// Keyword Use Cases
+import { ListKeywordsUseCase } from '@application/usecases/keyword/ListKeywordsUseCase';
+import { GetPlaceKeywordsUseCase } from '@application/usecases/keyword/GetPlaceKeywordsUseCase';
+import { AddPlaceKeywordUseCase } from '@application/usecases/keyword/AddPlaceKeywordUseCase';
+import { RemovePlaceKeywordUseCase } from '@application/usecases/keyword/RemovePlaceKeywordUseCase';
 
 // Ranking Use Cases
 import { RecordRankingUseCase } from '@application/usecases/tracking/ranking/RecordRankingUseCase';
@@ -186,6 +193,39 @@ export class DIContainer {
     this.services.set(
       'DeletePlaceUseCase',
       new DeletePlaceUseCase(this.get('PlaceRepository'))
+    );
+
+    this.services.set(
+      'GetPlaceStatsUseCase',
+      new GetPlaceStatsUseCase(this.get('PlaceRepository'))
+    );
+
+    // Keyword Use Cases
+    this.services.set(
+      'ListKeywordsUseCase',
+      new ListKeywordsUseCase(this.get('KeywordRepository'))
+    );
+
+    this.services.set(
+      'GetPlaceKeywordsUseCase',
+      new GetPlaceKeywordsUseCase(
+        this.get('PlaceKeywordRepository'),
+        this.get('PlaceRepository')
+      )
+    );
+
+    this.services.set(
+      'AddPlaceKeywordUseCase',
+      new AddPlaceKeywordUseCase(
+        this.get('PlaceKeywordRepository'),
+        this.get('PlaceRepository'),
+        this.get('KeywordRepository')
+      )
+    );
+
+    this.services.set(
+      'RemovePlaceKeywordUseCase',
+      new RemovePlaceKeywordUseCase(this.get('PlaceKeywordRepository'))
     );
 
     // Ranking Use Cases
