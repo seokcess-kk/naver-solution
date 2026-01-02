@@ -80,7 +80,10 @@ export class NaverScrapingService implements INaverScrapingService {
 
         // Debug: Log available elements for investigation
         if (process.env.PUPPETEER_DEBUG === 'true') {
-          const bodyHTML = await page.evaluate(() => document.body.innerHTML);
+          const bodyHTML = await page.evaluate(() => {
+            // @ts-ignore - document is available in browser context
+            return document.body.innerHTML;
+          });
           console.log('[NaverScrapingService] Page HTML (first 1000 chars):', bodyHTML.substring(0, 1000));
         }
 
