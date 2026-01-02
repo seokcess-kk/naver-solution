@@ -225,3 +225,50 @@ export interface GetReviewHistoryParams {
   endDate?: string;
   limit?: number;
 }
+
+// Competitor 타입
+export interface Competitor {
+  id: string;
+  placeId: string;
+  competitorNaverPlaceId: string;
+  competitorName: string;
+  category: string | null;
+  isActive: boolean;
+  createdAt: string;
+}
+
+export interface AddCompetitorInput {
+  placeId: string;
+  competitorNaverPlaceId: string;
+  competitorName: string;
+  category?: string;
+}
+
+export interface CompetitorSnapshot {
+  id: string;
+  competitorId: string;
+  rank: number | null;
+  blogReviewCount: number | null;
+  visitorReviewCount: number | null;
+  averageRating: number | null;
+  checkedAt: string;
+  createdAt: string;
+}
+
+export interface RecordCompetitorSnapshotInput {
+  competitorId: string;
+  rank?: number | null;
+  blogReviewCount?: number | null;
+  visitorReviewCount?: number | null;
+  averageRating?: number | null;
+  checkedAt: string;
+}
+
+export interface GetCompetitorHistoryParams {
+  startDate?: string;
+  endDate?: string;
+}
+
+export interface CompetitorHistoryItem extends CompetitorSnapshot {
+  competitorName?: string;
+}

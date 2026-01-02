@@ -18,7 +18,8 @@ export function createCompetitorRoutes(container: DIContainer): Router {
   const controller = new CompetitorController(
     container.get('AddCompetitorUseCase'),
     container.get('RecordCompetitorSnapshotUseCase'),
-    container.get('GetCompetitorHistoryUseCase')
+    container.get('GetCompetitorHistoryUseCase'),
+    container.get('GetPlaceCompetitorsUseCase')
   );
 
   // All routes require authentication
@@ -27,6 +28,9 @@ export function createCompetitorRoutes(container: DIContainer): Router {
 
   // POST /api/competitors/snapshots - Record competitor snapshot
   router.post('/snapshots', authMiddleware, validateDto(RecordCompetitorSnapshotDto), controller.recordCompetitorSnapshot);
+
+  // GET /api/competitors/place/:placeId - Get competitors for a place
+  router.get('/place/:placeId', authMiddleware, controller.getPlaceCompetitors);
 
   // GET /api/competitors/:competitorId/history - Get competitor history
   router.get('/:competitorId/history', authMiddleware, controller.getCompetitorHistory);

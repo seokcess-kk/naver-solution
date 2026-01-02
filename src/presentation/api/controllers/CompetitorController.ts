@@ -2,16 +2,19 @@ import { Request, Response, NextFunction } from 'express';
 import { AddCompetitorUseCase } from '@application/usecases/tracking/competitor/AddCompetitorUseCase';
 import { RecordCompetitorSnapshotUseCase } from '@application/usecases/tracking/competitor/RecordCompetitorSnapshotUseCase';
 import { GetCompetitorHistoryUseCase } from '@application/usecases/tracking/competitor/GetCompetitorHistoryUseCase';
+import { GetPlaceCompetitorsUseCase } from '@application/usecases/tracking/competitor/GetPlaceCompetitorsUseCase';
 import { AddCompetitorDto } from '@application/dtos/tracking/competitor/AddCompetitorDto';
 import { RecordCompetitorSnapshotDto } from '@application/dtos/tracking/competitor/RecordCompetitorSnapshotDto';
 import { GetCompetitorHistoryDto } from '@application/dtos/tracking/competitor/GetCompetitorHistoryDto';
+import { GetPlaceCompetitorsDto } from '@application/dtos/tracking/competitor/GetPlaceCompetitorsDto';
 import { BadRequestError } from '@application/errors/HttpError';
 
 export class CompetitorController {
   constructor(
     private readonly addCompetitorUseCase: AddCompetitorUseCase,
     private readonly recordCompetitorSnapshotUseCase: RecordCompetitorSnapshotUseCase,
-    private readonly getCompetitorHistoryUseCase: GetCompetitorHistoryUseCase
+    private readonly getCompetitorHistoryUseCase: GetCompetitorHistoryUseCase,
+    private readonly getPlaceCompetitorsUseCase: GetPlaceCompetitorsUseCase
   ) {}
 
   /**
@@ -50,6 +53,40 @@ export class CompetitorController {
       const result = await this.recordCompetitorSnapshotUseCase.execute(dto);
 
       res.status(201).json({
+        success: true,
+        data: result,
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  /**
+   * GET /api/competitors/place/:placeId
+   * Get all competitors for a place
+   * Query params: activeOnly?
+   */
+  getPlaceCompetitors = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      const { placeId } = req.params;
+      const { activeOnly } = req.query;
+
+      if (!placeId) {
+        throw new BadRequestError('placeId is required');
+      }
+
+      const dto: GetPlaceCompetitorsDto = {
+        placeId,
+        activeOnly: activeOnly === 'true',
+      };
+
+      const result = await this.getPlaceCompetitorsUseCase.execute(dto);
+
+      res.status(200).json({
         success: true,
         data: result,
       });

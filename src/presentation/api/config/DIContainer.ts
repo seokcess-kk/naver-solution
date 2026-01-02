@@ -50,6 +50,7 @@ import { GetLatestReviewStatsUseCase } from '@application/usecases/tracking/revi
 import { AddCompetitorUseCase } from '@application/usecases/tracking/competitor/AddCompetitorUseCase';
 import { RecordCompetitorSnapshotUseCase } from '@application/usecases/tracking/competitor/RecordCompetitorSnapshotUseCase';
 import { GetCompetitorHistoryUseCase } from '@application/usecases/tracking/competitor/GetCompetitorHistoryUseCase';
+import { GetPlaceCompetitorsUseCase } from '@application/usecases/tracking/competitor/GetPlaceCompetitorsUseCase';
 
 // Auth Services
 import { PasswordHashService } from '@infrastructure/auth/PasswordHashService';
@@ -344,6 +345,13 @@ export class DIContainer {
       'GetCompetitorHistoryUseCase',
       new GetCompetitorHistoryUseCase(
         this.get('CompetitorSnapshotRepository'),
+        this.get('CompetitorRepository')
+      )
+    );
+
+    this.services.set(
+      'GetPlaceCompetitorsUseCase',
+      new GetPlaceCompetitorsUseCase(
         this.get('CompetitorRepository')
       )
     );

@@ -55,6 +55,7 @@ import { GetLatestReviewStatsUseCase } from '@application/usecases/tracking/revi
 import { AddCompetitorUseCase } from '@application/usecases/tracking/competitor/AddCompetitorUseCase';
 import { RecordCompetitorSnapshotUseCase } from '@application/usecases/tracking/competitor/RecordCompetitorSnapshotUseCase';
 import { GetCompetitorHistoryUseCase } from '@application/usecases/tracking/competitor/GetCompetitorHistoryUseCase';
+import { GetPlaceCompetitorsUseCase } from '@application/usecases/tracking/competitor/GetPlaceCompetitorsUseCase';
 
 // Auth Use Cases
 import {
@@ -142,6 +143,7 @@ export interface ServiceRegistry {
   AddCompetitorUseCase: AddCompetitorUseCase;
   RecordCompetitorSnapshotUseCase: RecordCompetitorSnapshotUseCase;
   GetCompetitorHistoryUseCase: GetCompetitorHistoryUseCase;
+  GetPlaceCompetitorsUseCase: GetPlaceCompetitorsUseCase;
 
   // ============================================
   // Auth Use Cases
