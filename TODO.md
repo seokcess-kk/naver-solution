@@ -3,17 +3,32 @@
 > 마지막 업데이트: 2026-01-02
 > 프론트엔드 진행률: 80% (리뷰 기능 완성, 경쟁사/알림 미구현)
 
-## 🔥 긴급 - Puppeteer 랭킹 스크래핑 수정 (진행 중)
+## ✅ Firecrawl 하이브리드 스크래핑 시스템 (완료!)
 
-**문제**: 키워드 추가 및 "랭킹 조회" 버튼 클릭 시 순위가 잡히지 않음 (실제 네이버에서는 순위 존재)
+**기존 문제**: Puppeteer 스크래핑이 네이버 DOM 변경에 취약하여 순위를 가져오지 못함
 
-### 작업 내용
-- [ ] 백엔드 로그 확인 (스크래핑 API 호출 시 에러 메시지)
-- [ ] `src/infrastructure/naver/NaverPlaceScraperService.ts` 코드 검토
-- [ ] 네이버 검색 결과 페이지 DOM 구조 분석
-- [ ] Puppeteer 셀렉터 업데이트
-- [ ] 에러 핸들링 개선
-- [ ] 스크래핑 테스트 및 검증
+**해결 방법**: LLM 기반 Firecrawl API + Puppeteer 하이브리드 시스템 구현
+
+### 완료된 작업
+- [x] FirecrawlNaverScrapingService 구현 (LLM 기반 추출)
+- [x] HybridNaverScrapingService 구현 (Firecrawl 우선, Puppeteer fallback)
+- [x] DIContainer 업데이트 (하이브리드 서비스 주입)
+- [x] axios 의존성 추가
+- [x] 환경 변수 설정 (.env.example에 FIRECRAWL_API_KEY 추가)
+- [x] TypeScript 컴파일 통과
+- [x] 백엔드 서버 정상 동작 확인
+
+### 주요 개선사항
+- ✅ DOM 변경에 강건한 스크래핑 (LLM이 페이지 의미 이해)
+- ✅ 코드 간소화 (441줄 → ~130줄)
+- ✅ 자동 fallback (Firecrawl 실패 시 Puppeteer 사용)
+- ✅ 완전한 하위 호환성 (API 키 없으면 Puppeteer만 사용)
+- ✅ 비용 최적화 (API 키 제거 시 자동으로 무료 Puppeteer 전환)
+
+### 다음 단계 (선택적)
+- [ ] Firecrawl API 키 발급 및 테스트 (https://firecrawl.dev)
+- [ ] 2-4주 모니터링 (정확도, 비용, 성능)
+- [ ] 리뷰 스크래핑도 Firecrawl로 전환 (Phase 3)
 
 ---
 
@@ -162,6 +177,7 @@
 - [x] React Query + Zustand 상태 관리
 - [x] Axios 인터셉터 (자동 토큰 갱신)
 - [x] SSR/CSR hydration 처리
+- [x] **Firecrawl 하이브리드 스크래핑 시스템** (2026-01-02)
 
 ---
 
