@@ -59,6 +59,7 @@ import { IJwtAuthService } from '@domain/services/IJwtAuthService';
 
 // Naver Services
 import { NaverScrapingService } from '@infrastructure/naver/NaverScrapingService';
+import { HybridNaverScrapingService } from '@infrastructure/naver/HybridNaverScrapingService';
 import { INaverScrapingService } from '@infrastructure/naver/interfaces/INaverScrapingService';
 
 // Auth Use Cases
@@ -133,7 +134,7 @@ export class DIContainer {
   private initializeServices(): void {
     this.services.set('PasswordHashService', new PasswordHashService() as IPasswordHashService);
     this.services.set('JwtAuthService', new JwtAuthService() as IJwtAuthService);
-    this.services.set('NaverScrapingService', new NaverScrapingService() as INaverScrapingService);
+    this.services.set('NaverScrapingService', new HybridNaverScrapingService() as INaverScrapingService);
   }
 
   /**
