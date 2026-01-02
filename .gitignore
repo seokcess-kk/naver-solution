@@ -36,6 +36,8 @@ yarn-error.log*
 *.tmp
 temp/
 .cache/
+nul
+**/nul
 
 # Puppeteer
 .local-chromium/

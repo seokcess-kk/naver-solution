@@ -151,3 +151,77 @@ export interface ScrapeRankingResponse {
   rankingHistory: RankingHistory;
   message: string;
 }
+
+// Review 타입
+export type ReviewSentiment = 'POSITIVE' | 'NEGATIVE' | 'NEUTRAL';
+export type ReviewType = 'BLOG' | 'VISITOR' | 'OTHER';
+
+export interface Review {
+  id: string;
+  placeId: string;
+  naverReviewId: string | null;
+  reviewType: ReviewType;
+  content: string | null;
+  rating: number | null;
+  author: string | null;
+  sentiment: ReviewSentiment | null;
+  sentimentScore: number | null;
+  publishedAt: string | null;
+  createdAt: string;
+}
+
+export interface GetReviewsParams {
+  sentiment?: ReviewSentiment;
+  reviewType?: ReviewType;
+  limit?: number;
+  publishedAfter?: string;
+}
+
+export interface RecordReviewInput {
+  placeId: string;
+  naverReviewId?: string;
+  reviewType: ReviewType;
+  content?: string;
+  rating?: number;
+  author?: string;
+  sentiment?: ReviewSentiment;
+  sentimentScore?: number;
+  publishedAt?: string;
+}
+
+export interface ScrapeReviewsInput {
+  placeId: string;
+}
+
+export interface ScrapeReviewsResponse {
+  reviews: Review[];
+  message: string;
+  scrapedCount: number;
+}
+
+// ReviewHistory 타입
+export interface ReviewHistory {
+  id: string;
+  placeId: string;
+  totalReviews: number;
+  averageRating: number | null;
+  positiveCount: number;
+  negativeCount: number;
+  neutralCount: number;
+  recordedAt: string;
+  createdAt: string;
+}
+
+export interface ReviewStats {
+  totalReviews: number;
+  averageRating: number | null;
+  positiveCount: number;
+  negativeCount: number;
+  neutralCount: number;
+}
+
+export interface GetReviewHistoryParams {
+  startDate?: string;
+  endDate?: string;
+  limit?: number;
+}

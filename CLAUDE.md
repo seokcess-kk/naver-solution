@@ -17,14 +17,16 @@ Both applications work together to provide a full-stack monitoring solution.
 
 ## Common Development Commands
 
-### Build and Run
+### Backend Commands
+
+#### Build and Run
 ```bash
 npm run build              # Compile TypeScript to JavaScript
 npm start                  # Run compiled code from dist/
 npm run dev                # Run in development mode with ts-node
 ```
 
-### Testing
+#### Testing
 ```bash
 npm test                   # Run all tests
 npm run test:unit          # Run unit tests only
@@ -35,7 +37,16 @@ npm run test:watch         # Run tests in watch mode
 npm run test:coverage      # Generate coverage report
 ```
 
-### Code Quality
+**Test Structure**: Tests are organized in `tests/` directory with:
+- `unit/` - Unit tests for individual components
+- `integration/` - Integration tests for repository and database interactions
+- `e2e/` - End-to-end API tests
+- `fixtures/` - Test data and factory functions
+- `helpers/` - Test utilities
+- `mocks/` - Mock implementations
+- `setup/` - Test environment setup
+
+#### Code Quality
 ```bash
 npm run lint               # Check for linting errors
 npm run lint:fix           # Auto-fix linting errors
@@ -44,7 +55,7 @@ npm run format:check       # Check formatting without writing
 npm run type-check         # Type check without emitting files
 ```
 
-### Database Migrations
+#### Database Migrations
 ```bash
 npm run migration:generate # Generate new migration based on entity changes
 npm run migration:run      # Run pending migrations
@@ -52,6 +63,16 @@ npm run migration:revert   # Revert last migration
 ```
 
 **Important**: Migration commands use `ts-node -r tsconfig-paths/register` to support path aliases. When generating migrations, TypeORM compares current entities against database schema (synchronize is disabled in production).
+
+### Frontend Commands
+
+```bash
+cd web                  # Navigate to frontend directory
+npm run dev             # Start development server (default: http://localhost:3001)
+npm run build           # Build for production
+npm start               # Start production server
+npm run lint            # Run ESLint
+```
 
 ## Architecture
 
@@ -185,16 +206,6 @@ web/
 - **Protected routes**: `/dashboard`, `/places/*`
 - **Public routes**: `/login`, `/register`
 
-### Development Commands
-
-```bash
-cd web                  # Navigate to frontend directory
-npm run dev             # Start development server (default: http://localhost:3001)
-npm run build           # Build for production
-npm start               # Start production server
-npm run lint            # Run ESLint
-```
-
 ### Key Patterns
 
 - **Route Groups**: Uses `(auth)` and `(dashboard)` to organize routes without affecting URLs
@@ -266,6 +277,8 @@ Copy `.env.example` to `.env` and configure:
 
 Create `web/.env.local` for frontend environment variables:
 - `NEXT_PUBLIC_API_URL`: Backend API URL (default: http://localhost:3000/api)
+- `NEXT_PUBLIC_TOSS_CLIENT_KEY`: Toss Payments client key (for payment integration)
+- `NODE_ENV`: Environment (development/production)
 
 Note: Variables prefixed with `NEXT_PUBLIC_` are exposed to the browser.
 

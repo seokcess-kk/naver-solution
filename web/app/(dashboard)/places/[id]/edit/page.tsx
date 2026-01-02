@@ -5,6 +5,7 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import { PlaceForm } from '@/components/places/PlaceForm';
 import { getPlace, updatePlace } from '@/lib/api/place';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import type { PlaceFormData } from '@/lib/validations/place';
 import { toast } from 'sonner';
 import type { ApiErrorResponse } from '@/types/api';

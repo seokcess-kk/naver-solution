@@ -20,7 +20,7 @@ export interface GetPlacesParams {
  * Place 목록 조회 (페이지네이션)
  */
 export async function getPlaces(params: GetPlacesParams): Promise<PaginatedResponse<Place>> {
-  const { data } = await apiClient.get<ApiResponse<PaginatedResponse<Place>>>('/places', {
+  const { data } = await apiClient.get<ApiResponse<Place[]> & { pagination: any }>('/places', {
     params,
   });
 
@@ -28,7 +28,10 @@ export async function getPlaces(params: GetPlacesParams): Promise<PaginatedRespo
     throw new Error(data.message || 'Failed to fetch places');
   }
 
-  return data.data;
+  return {
+    data: data.data,
+    pagination: data.pagination,
+  };
 }
 
 /**
