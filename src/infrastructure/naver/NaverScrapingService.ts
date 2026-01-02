@@ -51,13 +51,39 @@ export class NaverScrapingService implements INaverScrapingService {
       // Navigate with retry logic
       await this.navigateWithRetry(page, searchUrl);
 
-      // Wait for place results section to load
-      try {
-        await page.waitForSelector('.place_section, #place-main-section', {
-          timeout: this.timeout,
-        });
-      } catch (error) {
-        console.warn('[NaverScrapingService] Place section not found');
+      // Wait for place results section to load with multiple possible selectors
+      const placeSectionSelectors = [
+        '.place_section',
+        '#place-main-section',
+        '.list_place',
+        '.area_place',
+        '.place_box',
+        '#_place_list',
+        '.place_bluelink',
+        '[data-cid]',
+      ];
+
+      let placeSectionFound = false;
+      for (const selector of placeSectionSelectors) {
+        try {
+          await page.waitForSelector(selector, { timeout: 5000 });
+          console.log(`[NaverScrapingService] Place section found with selector: ${selector}`);
+          placeSectionFound = true;
+          break;
+        } catch {
+          continue;
+        }
+      }
+
+      if (!placeSectionFound) {
+        console.warn('[NaverScrapingService] Place section not found with any known selector');
+
+        // Debug: Log available elements for investigation
+        if (process.env.PUPPETEER_DEBUG === 'true') {
+          const bodyHTML = await page.evaluate(() => document.body.innerHTML);
+          console.log('[NaverScrapingService] Page HTML (first 1000 chars):', bodyHTML.substring(0, 1000));
+        }
+
         return {
           rank: null,
           searchResultCount: null,
@@ -154,40 +180,79 @@ export class NaverScrapingService implements INaverScrapingService {
    */
   private async findPlaceRank(page: Page, targetPlaceId: string): Promise<number | null> {
     try {
-      // Try to find place items with multiple possible selectors
-      const placeItems = await page.$$('.place_item, .item, [data-place-id]');
+      // Try multiple possible selectors for place items
+      const placeItemSelectors = [
+        '.place_bluelink',
+        '.place_item',
+        '.item',
+        '[data-place-id]',
+        '[data-cid]',
+        'li[data-index]',
+        '.search_item.place',
+        '.Gm6xw',  // Naver often uses auto-generated class names
+      ];
+
+      let placeItems: any[] = [];
+      for (const selector of placeItemSelectors) {
+        placeItems = await page.$$(selector);
+        if (placeItems.length > 0) {
+          console.log(`[NaverScrapingService] Found ${placeItems.length} place items with selector: ${selector}`);
+          break;
+        }
+      }
 
       if (placeItems.length === 0) {
-        console.warn('[NaverScrapingService] No place items found');
+        console.warn('[NaverScrapingService] No place items found with any known selector');
+
+        // Debug: Log available anchors for investigation
+        if (process.env.PUPPETEER_DEBUG === 'true') {
+          const anchors = await page.$$eval('a', (links) =>
+            links.slice(0, 10).map((link) => link.href)
+          );
+          console.log('[NaverScrapingService] Sample anchor hrefs:', anchors);
+        }
+
         return null;
       }
 
-      console.log(`[NaverScrapingService] Found ${placeItems.length} place items`);
-
       // Iterate through results to find target place
       for (let i = 0; i < placeItems.length; i++) {
-        const placeId = await placeItems[i].evaluate((el) => {
+        const placeId = await placeItems[i].evaluate((el: any) => {
           // Try to extract place ID from various sources
-          const dataAttr = el.getAttribute('data-place-id');
-          if (dataAttr) return dataAttr;
+          const dataCid = el.getAttribute('data-cid');
+          if (dataCid) return dataCid;
 
-          // Try to find in link href
-          const link = el.querySelector('a');
+          const dataPlaceId = el.getAttribute('data-place-id');
+          if (dataPlaceId) return dataPlaceId;
+
+          // Try to find in link href (support multiple URL patterns)
+          const link = el.querySelector('a') || el;
           if (link) {
             const href = link.getAttribute('href') || '';
-            const match = href.match(/place\/(\d+)/);
+
+            // Pattern 1: /place/123456789
+            let match = href.match(/\/place\/(\d+)/);
             if (match) return match[1];
+
+            // Pattern 2: ?id=123456789
+            match = href.match(/[?&]id=(\d+)/);
+            if (match) return match[1];
+
+            // Pattern 3: data-cid in child element
+            const cidElement = link.querySelector('[data-cid]');
+            if (cidElement) return cidElement.getAttribute('data-cid');
           }
 
           return null;
         });
 
         if (placeId === targetPlaceId) {
+          console.log(`[NaverScrapingService] Found target place at rank ${i + 1}`);
           return i + 1; // Rank is 1-based
         }
       }
 
-      console.warn(`[NaverScrapingService] Place ID ${targetPlaceId} not found in results`);
+      console.warn(`[NaverScrapingService] Place ID ${targetPlaceId} not found in ${placeItems.length} results`);
       return null; // Not found
     } catch (error) {
       console.error('[NaverScrapingService] Error finding place rank:', error);
