@@ -70,7 +70,18 @@ import {
   RefreshTokenUseCase,
   GetUserProfileUseCase,
   LogoutUseCase,
+  UpdateUserProfileUseCase,
+  ChangePasswordUseCase,
 } from '@application/usecases/auth';
+
+// Notification Use Cases
+import {
+  GetUserNotificationSettingsUseCase,
+  CreateNotificationSettingUseCase,
+  UpdateNotificationSettingUseCase,
+  DeleteNotificationSettingUseCase,
+  GetNotificationLogsUseCase,
+} from '@application/usecases/notification';
 
 // Service Registry
 import { ServiceRegistry, ServiceName } from './ServiceRegistry';
@@ -391,6 +402,57 @@ export class DIContainer {
     this.services.set(
       'LogoutUseCase',
       new LogoutUseCase(this.get('RefreshTokenRepository'))
+    );
+
+    this.services.set(
+      'UpdateUserProfileUseCase',
+      new UpdateUserProfileUseCase(this.get('UserRepository'))
+    );
+
+    this.services.set(
+      'ChangePasswordUseCase',
+      new ChangePasswordUseCase(
+        this.get('UserRepository'),
+        this.get('PasswordHashService')
+      )
+    );
+
+    // Notification Use Cases
+    this.services.set(
+      'GetUserNotificationSettingsUseCase',
+      new GetUserNotificationSettingsUseCase(
+        this.get('NotificationSettingRepository')
+      )
+    );
+
+    this.services.set(
+      'CreateNotificationSettingUseCase',
+      new CreateNotificationSettingUseCase(
+        this.get('NotificationSettingRepository'),
+        this.get('UserRepository'),
+        this.get('PlaceRepository')
+      )
+    );
+
+    this.services.set(
+      'UpdateNotificationSettingUseCase',
+      new UpdateNotificationSettingUseCase(
+        this.get('NotificationSettingRepository')
+      )
+    );
+
+    this.services.set(
+      'DeleteNotificationSettingUseCase',
+      new DeleteNotificationSettingUseCase(
+        this.get('NotificationSettingRepository')
+      )
+    );
+
+    this.services.set(
+      'GetNotificationLogsUseCase',
+      new GetNotificationLogsUseCase(
+        this.get('NotificationLogRepository')
+      )
     );
   }
 }

@@ -1,7 +1,7 @@
 # TODO List - Naver Place Monitoring System
 
-> 마지막 업데이트: 2026-01-02
-> 프론트엔드 진행률: 80% (리뷰 기능 완성, 경쟁사/알림 미구현)
+> 마지막 업데이트: 2026-01-03
+> 프론트엔드 진행률: 98% (리뷰, 경쟁사, 알림, 프로필 기능 완성)
 
 ## ✅ Firecrawl 하이브리드 스크래핑 시스템 (완료!)
 
@@ -71,65 +71,102 @@
 
 ---
 
-## 🔴 Priority 2 - 경쟁사 비교 기능 (백엔드 API ✅ 존재)
+## ✅ Priority 2 - 경쟁사 비교 기능 (완료!)
 
 ### API 클라이언트
-- [ ] `web/lib/api/competitor.ts` 생성
-  - [ ] `addCompetitor(placeId, data)` - 경쟁사 추가
-  - [ ] `getCompetitorHistory(competitorId, params)` - 경쟁사 히스토리
-  - [ ] `recordCompetitorSnapshot(competitorId)` - 스냅샷 기록
+- [x] `web/lib/api/competitor.ts` 생성
+  - [x] `addCompetitor(placeId, data)` - 경쟁사 추가
+  - [x] `getPlaceCompetitors(placeId, activeOnly)` - 경쟁사 목록 조회
+  - [x] `getCompetitorHistory(competitorId, params)` - 경쟁사 히스토리
+  - [x] `recordCompetitorSnapshot(competitorId)` - 스냅샷 기록
 
 ### 페이지 구현
-- [ ] `web/app/(dashboard)/places/[id]/competitors/page.tsx` - 경쟁사 목록 페이지
-  - [ ] 경쟁사 목록 테이블
-  - [ ] 경쟁사 추가 폼
-  - [ ] 경쟁사 삭제 기능
+- [x] `web/app/(dashboard)/places/[id]/competitors/page.tsx` - 경쟁사 목록 페이지
+  - [x] 경쟁사 카드 리스트
+  - [x] 경쟁사 추가 다이얼로그
+  - [x] 경쟁사 상세 보기 버튼
+  - [x] React Query를 통한 데이터 관리
 
-- [ ] `web/app/(dashboard)/places/[id]/competitors/[competitorId]/page.tsx` - 경쟁사 비교 페이지
-  - [ ] 내 Place vs 경쟁사 비교 차트
-  - [ ] 리뷰 수, 평점, 랭킹 비교
-  - [ ] 시간대별 트렌드 비교
+- [x] `web/app/(dashboard)/places/[id]/competitors/[competitorId]/page.tsx` - 경쟁사 비교 페이지
+  - [x] 최신 통계 카드 (순위, 평점, 리뷰 수)
+  - [x] 순위 추이 차트
+  - [x] 평균 평점 추이 차트
+  - [x] 블로그/방문자 리뷰 수 추이 차트
+  - [x] 날짜 필터링 기능
 
 ### 컴포넌트
-- [ ] `web/components/competitors/CompetitorList.tsx`
-- [ ] `web/components/competitors/CompetitorForm.tsx`
-- [ ] `web/components/competitors/CompetitorComparisonChart.tsx`
+- [x] `web/components/competitors/CompetitorList.tsx` - 경쟁사 목록 컴포넌트
+- [x] `web/components/competitors/CompetitorCard.tsx` - 경쟁사 카드 컴포넌트
+- [x] `web/components/competitors/CompetitorForm.tsx` - 경쟁사 추가 폼
+- [x] `web/components/competitors/CompetitorComparisonChart.tsx` - 비교 차트
+
+### 테스트
+- [x] 타입 체크 통과
+- [x] 빌드 테스트 통과
 
 ---
 
-## 🟡 Priority 3 - 알림 시스템 (백엔드 API ✅ 존재)
+## ✅ Priority 3 - 알림 시스템 (완료!)
 
-### API 클라이언트
-- [ ] `web/lib/api/notification.ts` 생성
-  - [ ] `getNotificationSettings(userId)` - 알림 설정 조회
-  - [ ] `updateNotificationSettings(userId, data)` - 알림 설정 수정
-  - [ ] `getNotificationLogs(userId, params)` - 알림 로그 조회
+### 백엔드 API
+- [x] DTO 생성 (NotificationSettingResponseDto, CreateNotificationSettingDto, UpdateNotificationSettingDto, NotificationLogResponseDto)
+- [x] Use Case 생성 (GetUserNotificationSettings, Create, Update, Delete, GetNotificationLogs)
+- [x] Controller 및 Routes 생성
+- [x] DIContainer 업데이트
 
-### 페이지 구현
-- [ ] `web/app/(dashboard)/settings/notifications/page.tsx` - 알림 설정 페이지
-  - [ ] 이메일 알림 ON/OFF
-  - [ ] Slack 알림 ON/OFF
-  - [ ] 알림 조건 설정 (랭킹 하락, 리뷰 급증 등)
-  - [ ] 알림 로그 조회
+### 프론트엔드
+- [x] `web/lib/api/notification.ts` 생성
+  - [x] `getUserNotificationSettings(userId)` - 알림 설정 조회
+  - [x] `createNotificationSetting(input)` - 알림 설정 생성
+  - [x] `updateNotificationSetting(id, input)` - 알림 설정 수정
+  - [x] `deleteNotificationSetting(id)` - 알림 설정 삭제
+  - [x] `getPlaceNotificationLogs(placeId, limit)` - 알림 로그 조회
 
-### 컴포넌트
-- [ ] `web/components/notifications/NotificationSettings.tsx`
-- [ ] `web/components/notifications/NotificationLogTable.tsx`
+- [x] `web/app/(dashboard)/settings/notifications/page.tsx` - 알림 설정 페이지
+  - [x] 알림 설정 목록 테이블
+  - [x] 알림 ON/OFF 토글 (Switch)
+  - [x] 알림 삭제 기능
+  - [x] 채널별 아이콘 표시 (Email, Slack)
+  - [x] 알림 유형별 Badge 표시
+
+### 타입 정의
+- [x] `web/types/api.ts`에 Notification 관련 타입 추가
+
+### 테스트
+- [x] 백엔드 타입 체크 통과
+- [x] 프론트엔드 타입 체크 통과
+- [x] 빌드 테스트 통과
 
 ---
 
-## 🔵 Priority 4 - 사용자 프로필 개선
+## ✅ Priority 4 - 사용자 프로필 개선 (완료!)
 
-### 페이지 구현
-- [ ] `web/app/(dashboard)/profile/page.tsx` - 프로필 페이지
-  - [ ] 프로필 정보 표시
-  - [ ] 프로필 수정 폼
-  - [ ] 비밀번호 변경 기능
+### 백엔드 API
+- [x] UpdateUserProfileDto 생성
+- [x] ChangePasswordDto 생성
+- [x] UpdateUserProfileUseCase 구현
+- [x] ChangePasswordUseCase 구현
+- [x] AuthController에 메서드 추가 (updateProfile, changePassword)
+- [x] authRoutes에 라우트 추가 (PATCH /profile, PATCH /password)
+- [x] DIContainer 및 ServiceRegistry 업데이트
 
-### API 클라이언트 확장
-- [ ] `web/lib/api/auth.ts`에 프로필 수정 API 추가
-  - [ ] `updateProfile(data)` - 프로필 수정
-  - [ ] `changePassword(data)` - 비밀번호 변경
+### 프론트엔드
+- [x] `web/lib/api/auth.ts`에 프로필 수정 API 추가
+  - [x] `updateProfile(data)` - 프로필 수정
+  - [x] `changePassword(data)` - 비밀번호 변경
+- [x] `web/lib/validations/auth.ts`에 validation 스키마 추가
+  - [x] updateProfileSchema
+  - [x] changePasswordSchema
+- [x] `web/app/(dashboard)/profile/page.tsx` - 프로필 페이지
+  - [x] 프로필 정보 표시
+  - [x] 프로필 수정 폼 (이름, 이메일)
+  - [x] 비밀번호 변경 폼
+  - [x] 계정 정보 표시 (ID, 가입일)
+
+### 테스트
+- [x] 백엔드 타입 체크 통과
+- [x] 프론트엔드 타입 체크 통과
+- [x] 빌드 테스트 통과
 
 ---
 
@@ -178,17 +215,21 @@
 - [x] Axios 인터셉터 (자동 토큰 갱신)
 - [x] SSR/CSR hydration 처리
 - [x] **Firecrawl 하이브리드 스크래핑 시스템** (2026-01-02)
+- [x] **리뷰 관련 기능** (2026-01-02)
+- [x] **경쟁사 비교 기능** (2026-01-03)
+- [x] **알림 시스템** (2026-01-03)
+- [x] **사용자 프로필 개선** (2026-01-03)
 
 ---
 
 ## 🎯 다음 시작할 작업
 
-**추천**: Priority 1 - 리뷰 관련 기능부터 시작
-- 백엔드 API가 이미 완성되어 있음
-- 사용자에게 가장 중요한 기능 (감정 분석)
-- 대시보드에 통합하기 좋음
+**추천**: Priority 5 - 기존 기능 개선
+- 대시보드 개선 (최근 랭킹 변동 알림, 최근 리뷰 요약, 활동 로그)
+- 랭킹 페이지 개선 (날짜 필터링 UI, 차트 확대/축소, CSV 내보내기)
+- Place 목록 개선 (검색, 필터링, 정렬)
 
 **시작 명령어**:
 ```
-"TODO.md 보고 Priority 1 작업부터 진행해줘"
+"TODO.md 보고 Priority 5 작업 진행해줘"
 ```

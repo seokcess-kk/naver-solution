@@ -64,7 +64,18 @@ import {
   RefreshTokenUseCase,
   GetUserProfileUseCase,
   LogoutUseCase,
+  UpdateUserProfileUseCase,
+  ChangePasswordUseCase,
 } from '@application/usecases/auth';
+
+// Notification Use Cases
+import {
+  GetUserNotificationSettingsUseCase,
+  CreateNotificationSettingUseCase,
+  UpdateNotificationSettingUseCase,
+  DeleteNotificationSettingUseCase,
+  GetNotificationLogsUseCase,
+} from '@application/usecases/notification';
 
 /**
  * Service Registry Interface
@@ -153,6 +164,17 @@ export interface ServiceRegistry {
   RefreshTokenUseCase: RefreshTokenUseCase;
   GetUserProfileUseCase: GetUserProfileUseCase;
   LogoutUseCase: LogoutUseCase;
+  UpdateUserProfileUseCase: UpdateUserProfileUseCase;
+  ChangePasswordUseCase: ChangePasswordUseCase;
+
+  // ============================================
+  // Notification Use Cases
+  // ============================================
+  GetUserNotificationSettingsUseCase: GetUserNotificationSettingsUseCase;
+  CreateNotificationSettingUseCase: CreateNotificationSettingUseCase;
+  UpdateNotificationSettingUseCase: UpdateNotificationSettingUseCase;
+  DeleteNotificationSettingUseCase: DeleteNotificationSettingUseCase;
+  GetNotificationLogsUseCase: GetNotificationLogsUseCase;
 }
 
 /**

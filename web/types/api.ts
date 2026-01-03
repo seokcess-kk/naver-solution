@@ -272,3 +272,48 @@ export interface GetCompetitorHistoryParams {
 export interface CompetitorHistoryItem extends CompetitorSnapshot {
   competitorName?: string;
 }
+
+// NotificationSetting 타입
+export interface NotificationSetting {
+  id: string;
+  userId: string;
+  placeId: string | null;
+  placeName?: string;
+  notificationType: string;
+  channel: string;
+  isEnabled: boolean;
+  conditions: Record<string, any> | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateNotificationSettingInput {
+  userId: string;
+  placeId?: string;
+  notificationType: string;
+  channel: string;
+  isEnabled?: boolean;
+  conditions?: Record<string, any>;
+}
+
+export interface UpdateNotificationSettingInput {
+  notificationType?: string;
+  channel?: string;
+  isEnabled?: boolean;
+  conditions?: Record<string, any>;
+}
+
+// NotificationLog 타입
+export interface NotificationLog {
+  id: string;
+  notificationSettingId: string;
+  placeId: string;
+  placeName?: string;
+  notificationType: string;
+  channel: string;
+  message: string;
+  isSent: boolean;
+  sentAt: string | null;
+  errorMessage: string | null;
+  createdAt: string;
+}

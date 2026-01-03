@@ -7,6 +7,8 @@ import {
   RegisterUserDto,
   LoginRequestDto,
   RefreshTokenRequestDto,
+  UpdateUserProfileDto,
+  ChangePasswordDto,
 } from '@application/dtos/auth';
 import { IJwtAuthService } from '@domain/services/IJwtAuthService';
 
@@ -24,7 +26,9 @@ export function createAuthRoutes(container: DIContainer): Router {
     container.get('LoginUseCase'),
     container.get('RefreshTokenUseCase'),
     container.get('GetUserProfileUseCase'),
-    container.get('LogoutUseCase')
+    container.get('LogoutUseCase'),
+    container.get('UpdateUserProfileUseCase'),
+    container.get('ChangePasswordUseCase')
   );
 
   // Public routes
@@ -38,6 +42,18 @@ export function createAuthRoutes(container: DIContainer): Router {
 
   // Protected routes (require authentication)
   router.get('/profile', authMiddleware, controller.getProfile);
+  router.patch(
+    '/profile',
+    authMiddleware,
+    validateDto(UpdateUserProfileDto),
+    controller.updateProfile
+  );
+  router.patch(
+    '/password',
+    authMiddleware,
+    validateDto(ChangePasswordDto),
+    controller.changePassword
+  );
   router.post('/logout', authMiddleware, controller.logout);
 
   return router;

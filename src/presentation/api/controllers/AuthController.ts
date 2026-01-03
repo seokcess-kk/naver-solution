@@ -4,9 +4,13 @@ import { LoginUseCase } from '@application/usecases/auth/LoginUseCase';
 import { RefreshTokenUseCase } from '@application/usecases/auth/RefreshTokenUseCase';
 import { GetUserProfileUseCase } from '@application/usecases/auth/GetUserProfileUseCase';
 import { LogoutUseCase } from '@application/usecases/auth/LogoutUseCase';
+import { UpdateUserProfileUseCase } from '@application/usecases/auth/UpdateUserProfileUseCase';
+import { ChangePasswordUseCase } from '@application/usecases/auth/ChangePasswordUseCase';
 import { RegisterUserDto } from '@application/dtos/auth/RegisterUserDto';
 import { LoginRequestDto } from '@application/dtos/auth/LoginRequestDto';
 import { RefreshTokenRequestDto } from '@application/dtos/auth/RefreshTokenRequestDto';
+import { UpdateUserProfileDto } from '@application/dtos/auth/UpdateUserProfileDto';
+import { ChangePasswordDto } from '@application/dtos/auth/ChangePasswordDto';
 
 export class AuthController {
   constructor(
@@ -14,7 +18,9 @@ export class AuthController {
     private readonly loginUseCase: LoginUseCase,
     private readonly refreshTokenUseCase: RefreshTokenUseCase,
     private readonly getUserProfileUseCase: GetUserProfileUseCase,
-    private readonly logoutUseCase: LogoutUseCase
+    private readonly logoutUseCase: LogoutUseCase,
+    private readonly updateUserProfileUseCase: UpdateUserProfileUseCase,
+    private readonly changePasswordUseCase: ChangePasswordUseCase
   ) {}
 
   /**
@@ -127,6 +133,55 @@ export class AuthController {
       res.status(200).json({
         success: true,
         message: 'Logged out successfully',
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  /**
+   * PATCH /api/auth/profile
+   * Update user profile (requires authentication)
+   */
+  updateProfile = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      // req.user is set by authMiddleware
+      const userId = req.user!.userId;
+      const dto: UpdateUserProfileDto = req.body;
+      const result = await this.updateUserProfileUseCase.execute(userId, dto);
+
+      res.status(200).json({
+        success: true,
+        data: result,
+        message: 'Profile updated successfully',
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  /**
+   * PATCH /api/auth/password
+   * Change user password (requires authentication)
+   */
+  changePassword = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      // req.user is set by authMiddleware
+      const userId = req.user!.userId;
+      const dto: ChangePasswordDto = req.body;
+      await this.changePasswordUseCase.execute(userId, dto);
+
+      res.status(200).json({
+        success: true,
+        message: 'Password changed successfully',
       });
     } catch (error) {
       next(error);

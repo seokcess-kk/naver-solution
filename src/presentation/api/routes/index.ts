@@ -7,6 +7,7 @@ import { createRankingRoutes } from './rankingRoutes';
 import { createReviewRoutes } from './reviewRoutes';
 import { createReviewHistoryRoutes } from './reviewHistoryRoutes';
 import { createCompetitorRoutes } from './competitorRoutes';
+import { createNotificationRoutes } from './notificationRoutes';
 
 /**
  * Create main API router with all routes
@@ -24,6 +25,7 @@ export function createApiRoutes(container: DIContainer): Router {
   router.use('/reviews', createReviewRoutes(container));
   router.use('/review-history', createReviewHistoryRoutes(container));
   router.use('/competitors', createCompetitorRoutes(container));
+  router.use('/notifications', createNotificationRoutes(container));
 
   return router;
 }
