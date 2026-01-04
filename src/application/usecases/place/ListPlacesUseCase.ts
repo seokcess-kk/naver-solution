@@ -59,7 +59,7 @@ export class ListPlacesUseCase {
 
     // 3. Convert to DTOs
     return {
-      data: result.data.map((place) => PlaceResponseDto.fromEntity(place, false)),
+      data: result.data.map((place) => PlaceResponseDto.fromEntity(place, true)),
       pagination: result.pagination,
     };
   }

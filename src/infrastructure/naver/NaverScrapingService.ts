@@ -6,7 +6,6 @@ import {
 } from './interfaces/INaverScrapingService';
 
 export class NaverScrapingService implements INaverScrapingService {
-  private browser: Browser | null = null;
   private readonly headless: boolean;
   private readonly timeout: number;
   private readonly delay: number;
@@ -18,16 +17,34 @@ export class NaverScrapingService implements INaverScrapingService {
   }
 
   /**
-   * Ensure browser instance is initialized (lazy loading)
+   * Create a new browser instance for each request (per-request lifecycle)
+   * This ensures complete isolation and prevents connection closure issues
    */
-  private async ensureBrowser(): Promise<Browser> {
-    if (!this.browser) {
-      this.browser = await puppeteer.launch({
+  private async createBrowser(): Promise<Browser> {
+    console.log('[NaverScrapingService] Creating new browser instance...');
+    console.log('[NaverScrapingService] Headless mode:', this.headless);
+
+    try {
+      const browser = await puppeteer.launch({
         headless: this.headless,
-        args: ['--no-sandbox', '--disable-setuid-sandbox'],
+        args: [
+          '--no-sandbox',
+          '--disable-setuid-sandbox',
+          '--disable-dev-shm-usage',
+          '--disable-gpu',
+          '--disable-software-rasterizer',
+          '--disable-extensions',
+        ],
       });
+
+      console.log('[NaverScrapingService] Browser launched successfully');
+      console.log('[NaverScrapingService] Browser connected:', browser.isConnected());
+
+      return browser;
+    } catch (error) {
+      console.error('[NaverScrapingService] Failed to launch browser:', error);
+      throw error;
     }
-    return this.browser;
   }
 
   /**
@@ -38,7 +55,7 @@ export class NaverScrapingService implements INaverScrapingService {
     region: string | null,
     targetPlaceId: string
   ): Promise<NaverRankingResult> {
-    const browser = await this.ensureBrowser();
+    const browser = await this.createBrowser();
     const page = await browser.newPage();
 
     try {
@@ -121,6 +138,8 @@ export class NaverScrapingService implements INaverScrapingService {
       };
     } finally {
       await page.close();
+      await browser.close();
+      console.log('[NaverScrapingService] Browser closed');
     }
   }
 
@@ -277,7 +296,7 @@ export class NaverScrapingService implements INaverScrapingService {
     naverPlaceId: string,
     limit: number = 10
   ): Promise<NaverReviewResult[]> {
-    const browser = await this.ensureBrowser();
+    const browser = await this.createBrowser();
     const page = await browser.newPage();
 
     try {
@@ -309,6 +328,8 @@ export class NaverScrapingService implements INaverScrapingService {
       return []; // Graceful degradation
     } finally {
       await page.close();
+      await browser.close();
+      console.log('[NaverScrapingService] Browser closed');
     }
   }
 
@@ -498,12 +519,11 @@ export class NaverScrapingService implements INaverScrapingService {
 
   /**
    * Close browser and cleanup resources
+   * Note: With per-request browser lifecycle, browsers are closed after each request.
+   * This method is kept for interface compatibility but does nothing.
    */
   async close(): Promise<void> {
-    if (this.browser) {
-      await this.browser.close();
-      this.browser = null;
-      console.log('[NaverScrapingService] Browser closed');
-    }
+    // No-op: browsers are now created and closed per-request
+    console.log('[NaverScrapingService] close() called - no persistent browser to close');
   }
 }

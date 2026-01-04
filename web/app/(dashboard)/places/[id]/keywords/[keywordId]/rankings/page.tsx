@@ -5,6 +5,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getRankingHistory, scrapeRanking } from '@/lib/api/ranking';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import type { ApiErrorResponse } from '@/types/api';
@@ -18,7 +20,12 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
+  Brush,
 } from 'recharts';
+import { CalendarIcon, Download, ZoomIn, ZoomOut } from 'lucide-react';
+import { format } from 'date-fns';
+import { ko } from 'date-fns/locale';
+import { cn } from '@/lib/utils';
 
 export default function RankingHistoryPage() {
   const router = useRouter();
@@ -27,6 +34,9 @@ export default function RankingHistoryPage() {
   const placeId = params.id as string;
   const keywordId = params.keywordId as string;
   const [dateRange, setDateRange] = useState<{ start?: string; end?: string }>({});
+  const [startDate, setStartDate] = useState<Date>();
+  const [endDate, setEndDate] = useState<Date>();
+  const [showBrush, setShowBrush] = useState(true);
 
   const { data: rankings, isLoading, error } = useQuery({
     queryKey: ['rankingHistory', keywordId, dateRange.start, dateRange.end],
@@ -50,6 +60,56 @@ export default function RankingHistoryPage() {
     if (confirm('네이버에서 현재 랭킹을 조회하시겠습니까?')) {
       scrapeRankingMutation.mutate();
     }
+  };
+
+  const handleApplyDateFilter = () => {
+    setDateRange({
+      start: startDate ? format(startDate, 'yyyy-MM-dd') : undefined,
+      end: endDate ? format(endDate, 'yyyy-MM-dd') : undefined,
+    });
+  };
+
+  const handleClearDateFilter = () => {
+    setStartDate(undefined);
+    setEndDate(undefined);
+    setDateRange({});
+  };
+
+  const handleExportCSV = () => {
+    if (!rankings || rankings.length === 0) {
+      toast.error('내보낼 데이터가 없습니다');
+      return;
+    }
+
+    const csvHeaders = ['조회일시', '순위', '검색결과수', 'Place명', '키워드', '지역'];
+    const csvRows = rankings.map((r) => [
+      new Date(r.checkedAt).toLocaleString('ko-KR'),
+      r.rank || '-',
+      r.searchResultCount || '-',
+      r.placeName || '',
+      r.keywordText || '',
+      r.region || '',
+    ]);
+
+    const csvContent = [
+      csvHeaders.join(','),
+      ...csvRows.map((row) => row.join(',')),
+    ].join('\n');
+
+    const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute(
+      'download',
+      `ranking_history_${format(new Date(), 'yyyyMMdd_HHmmss')}.csv`
+    );
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    toast.success('CSV 파일이 다운로드되었습니다');
   };
 
   // 차트 데이터 변환 (순위는 낮을수록 좋으므로 Y축 반전)
@@ -160,6 +220,15 @@ export default function RankingHistoryPage() {
           </div>
           <div className="flex gap-2">
             <Button
+              variant="outline"
+              size="sm"
+              onClick={handleExportCSV}
+              disabled={!rankings || rankings.length === 0}
+            >
+              <Download className="w-4 h-4 mr-2" />
+              CSV 내보내기
+            </Button>
+            <Button
               variant="default"
               onClick={handleScrape}
               disabled={scrapeRankingMutation.isPending}
@@ -171,6 +240,98 @@ export default function RankingHistoryPage() {
             </Button>
           </div>
         </div>
+
+        {/* 날짜 필터링 UI */}
+        <Card>
+          <CardHeader>
+            <CardTitle>기간 필터</CardTitle>
+            <CardDescription>조회할 기간을 선택하세요</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center gap-4 flex-wrap">
+              <div className="flex items-center gap-2">
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        'w-[240px] justify-start text-left font-normal',
+                        !startDate && 'text-muted-foreground'
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {startDate ? (
+                        format(startDate, 'PPP', { locale: ko })
+                      ) : (
+                        <span>시작일 선택</span>
+                      )}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={startDate}
+                      onSelect={setStartDate}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+
+                <span className="text-gray-500">~</span>
+
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        'w-[240px] justify-start text-left font-normal',
+                        !endDate && 'text-muted-foreground'
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {endDate ? (
+                        format(endDate, 'PPP', { locale: ko })
+                      ) : (
+                        <span>종료일 선택</span>
+                      )}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={endDate}
+                      onSelect={setEndDate}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              <div className="flex gap-2">
+                <Button onClick={handleApplyDateFilter} size="sm">
+                  적용
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={handleClearDateFilter}
+                  size="sm"
+                  disabled={!startDate && !endDate}
+                >
+                  초기화
+                </Button>
+              </div>
+
+              {(dateRange.start || dateRange.end) && (
+                <div className="text-sm text-gray-600">
+                  필터 적용됨:{' '}
+                  {dateRange.start && format(new Date(dateRange.start), 'yyyy-MM-dd')}
+                  {dateRange.start && dateRange.end && ' ~ '}
+                  {dateRange.end && format(new Date(dateRange.end), 'yyyy-MM-dd')}
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
 
         {latestRanking && (
           <Card>
@@ -207,12 +368,33 @@ export default function RankingHistoryPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>랭킹 추이</CardTitle>
-            <CardDescription>시간에 따른 순위 변화를 확인하세요</CardDescription>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle>랭킹 추이</CardTitle>
+                <CardDescription>시간에 따른 순위 변화를 확인하세요</CardDescription>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowBrush(!showBrush)}
+              >
+                {showBrush ? (
+                  <>
+                    <ZoomOut className="w-4 h-4 mr-2" />
+                    확대/축소 끄기
+                  </>
+                ) : (
+                  <>
+                    <ZoomIn className="w-4 h-4 mr-2" />
+                    확대/축소 켜기
+                  </>
+                )}
+              </Button>
+            </div>
           </CardHeader>
           <CardContent>
             {chartData && chartData.length > 0 ? (
-              <ResponsiveContainer width="100%" height={400}>
+              <ResponsiveContainer width="100%" height={showBrush ? 450 : 400}>
                 <LineChart data={chartData}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="date" />
@@ -244,6 +426,7 @@ export default function RankingHistoryPage() {
                     strokeWidth={2}
                     dot={{ r: 4 }}
                   />
+                  {showBrush && <Brush dataKey="date" height={30} stroke="#8884d8" />}
                 </LineChart>
               </ResponsiveContainer>
             ) : (

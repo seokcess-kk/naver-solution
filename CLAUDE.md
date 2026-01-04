@@ -68,11 +68,13 @@ npm run migration:revert   # Revert last migration
 
 ```bash
 cd web                  # Navigate to frontend directory
-npm run dev             # Start development server (default: http://localhost:3001)
+npm run dev             # Start development server (default: http://localhost:3000)
 npm run build           # Build for production
 npm start               # Start production server
 npm run lint            # Run ESLint
 ```
+
+**Note**: Frontend runs on port 3000, backend runs on port 8000. Ensure `NEXT_PUBLIC_API_URL` in `web/.env.local` points to `http://localhost:8000/api`
 
 ## Architecture
 
@@ -292,6 +294,20 @@ Note: Variables prefixed with `NEXT_PUBLIC_` are exposed to the browser.
 6. **Testing**: Jest is configured with ts-jest; tests go in `tests/` or `*.test.ts` files
 7. **Full-Stack Development**: Run backend (`npm run dev`) and frontend (`cd web && npm run dev`) in separate terminals
 
+### Known Issues
+
+**Backend Server Auto-Shutdown**: When running backend with `npm run dev` in background (or via automation), the ts-node process may terminate unexpectedly with exit code 0.
+
+**Workaround**: Always run backend in foreground in a dedicated terminal window:
+```bash
+# Open new terminal/CMD window
+cd C:\Users\assag\OneDrive\바탕 화면\naver-project
+npm run dev
+# Keep terminal open - do not run in background
+```
+
+This allows real-time log monitoring and ensures stable server operation. Consider using PM2 or similar process manager for production deployments.
+
 ## Important Patterns
 
 ### Dependency Injection Container
@@ -313,6 +329,15 @@ Note: Variables prefixed with `NEXT_PUBLIC_` are exposed to the browser.
 - Interfaces defined in `domain/repositories/`
 - Implementations in `infrastructure/repositories/`
 - Inject repository interfaces into use cases, not concrete implementations
+- **Critical**: When repositories need to return count data (like `reviewCount` or `keywordCount`), ensure relations are loaded in the repository queries:
+  ```typescript
+  // Example: PlaceRepository.findById()
+  return this.repository.findOne({
+    where: { id },
+    relations: ['user', 'reviews', 'placeKeywords'], // Load relations for counts
+  });
+  ```
+- Use cases that convert entities to DTOs with counts must pass `includeRelations: true` to the DTO conversion method
 
 ### Use Case Structure
 - One class per use case
@@ -325,6 +350,12 @@ Note: Variables prefixed with `NEXT_PUBLIC_` are exposed to the browser.
 - Must handle dynamic content loading
 - Implement rate limiting to avoid blocking
 - Extract ranking, review count, ratings
+- **Chrome Installation**: Puppeteer requires Chrome to be installed. If encountering "Could not find Chrome" errors, run:
+  ```bash
+  npx puppeteer browsers install chrome
+  ```
+  Chrome will be installed to `C:\Users\[username]\.cache\puppeteer\chrome\`
+- **Hybrid Scraping**: The system uses `HybridNaverScrapingService` which can use either Puppeteer or Firecrawl API. If `FIRECRAWL_API_KEY` is not set in `.env`, it falls back to Puppeteer-only mode
 
 ### Notification System
 - Conditions stored as JSONB in database

@@ -18,9 +18,6 @@ export class AddKeywordTables1767263046784 implements MigrationInterface {
         await queryRunner.query(`ALTER TABLE "places" DROP CONSTRAINT "places_user_id_fkey"`);
         await queryRunner.query(`ALTER TABLE "place_keywords" DROP CONSTRAINT "place_keywords_place_id_keyword_id_region_key"`);
         await queryRunner.query(`ALTER TABLE "competitors" DROP CONSTRAINT "competitors_place_id_competitor_naver_place_id_key"`);
-        await queryRunner.query(`CREATE TABLE "refresh_tokens" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "token" character varying(500) NOT NULL, "expires_at" TIMESTAMP NOT NULL, "is_revoked" boolean NOT NULL DEFAULT false, "device_info" character varying(255), "created_at" TIMESTAMP NOT NULL DEFAULT now(), "revoked_at" TIMESTAMP, "user_id" uuid NOT NULL, CONSTRAINT "UQ_4542dd2f38a61354a040ba9fd57" UNIQUE ("token"), CONSTRAINT "PK_7d8bee0204106019488c4c50ffa" PRIMARY KEY ("id"))`);
-        await queryRunner.query(`CREATE INDEX "idx_refresh_tokens_token" ON "refresh_tokens" ("token") `);
-        await queryRunner.query(`CREATE INDEX "idx_refresh_tokens_user_id" ON "refresh_tokens" ("user_id") `);
         await queryRunner.query(`ALTER TABLE "keywords" ALTER COLUMN "created_at" SET NOT NULL`);
         await queryRunner.query(`DROP INDEX "public"."idx_ranking_histories_place_keyword_checked"`);
         await queryRunner.query(`ALTER TABLE "ranking_histories" ALTER COLUMN "checked_at" DROP DEFAULT`);
@@ -78,11 +75,9 @@ export class AddKeywordTables1767263046784 implements MigrationInterface {
         await queryRunner.query(`ALTER TABLE "notification_settings" ADD CONSTRAINT "FK_91a7ffebe8b406c4470845d4781" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE NO ACTION`);
         await queryRunner.query(`ALTER TABLE "notification_settings" ADD CONSTRAINT "FK_533d48d7a72e61bc10fd17356f2" FOREIGN KEY ("place_id") REFERENCES "places"("id") ON DELETE CASCADE ON UPDATE NO ACTION`);
         await queryRunner.query(`ALTER TABLE "places" ADD CONSTRAINT "FK_24094a8af93e0d76e84e563b6ed" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE NO ACTION`);
-        await queryRunner.query(`ALTER TABLE "refresh_tokens" ADD CONSTRAINT "FK_3ddc983c5f7bcf132fd8732c3f4" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(`ALTER TABLE "refresh_tokens" DROP CONSTRAINT "FK_3ddc983c5f7bcf132fd8732c3f4"`);
         await queryRunner.query(`ALTER TABLE "places" DROP CONSTRAINT "FK_24094a8af93e0d76e84e563b6ed"`);
         await queryRunner.query(`ALTER TABLE "notification_settings" DROP CONSTRAINT "FK_533d48d7a72e61bc10fd17356f2"`);
         await queryRunner.query(`ALTER TABLE "notification_settings" DROP CONSTRAINT "FK_91a7ffebe8b406c4470845d4781"`);
@@ -140,9 +135,6 @@ export class AddKeywordTables1767263046784 implements MigrationInterface {
         await queryRunner.query(`ALTER TABLE "ranking_histories" ALTER COLUMN "checked_at" SET DEFAULT now()`);
         await queryRunner.query(`CREATE INDEX "idx_ranking_histories_place_keyword_checked" ON "ranking_histories" ("checked_at", "place_keyword_id") `);
         await queryRunner.query(`ALTER TABLE "keywords" ALTER COLUMN "created_at" DROP NOT NULL`);
-        await queryRunner.query(`DROP INDEX "public"."idx_refresh_tokens_user_id"`);
-        await queryRunner.query(`DROP INDEX "public"."idx_refresh_tokens_token"`);
-        await queryRunner.query(`DROP TABLE "refresh_tokens"`);
         await queryRunner.query(`ALTER TABLE "competitors" ADD CONSTRAINT "competitors_place_id_competitor_naver_place_id_key" UNIQUE ("place_id", "competitor_naver_place_id")`);
         await queryRunner.query(`ALTER TABLE "place_keywords" ADD CONSTRAINT "place_keywords_place_id_keyword_id_region_key" UNIQUE ("place_id", "keyword_id", "region")`);
         await queryRunner.query(`ALTER TABLE "places" ADD CONSTRAINT "places_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE NO ACTION`);

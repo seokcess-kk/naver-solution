@@ -13,6 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import type { PlaceKeyword, ApiErrorResponse } from '@/types/api';
 import { Skeleton } from '@/components/ui/skeleton';
+import { MessageSquare } from 'lucide-react';
 
 // 키워드 랭킹 아이템 컴포넌트
 interface KeywordRankingItemProps {
@@ -280,6 +281,14 @@ export default function PlaceDetailPage() {
               onClick={() => router.push(`/places/${placeId}/edit`)}
             >
               수정
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => router.push(`/places/${placeId}/reviews`)}
+              aria-label="리뷰 관리"
+            >
+              <MessageSquare className="h-4 w-4 mr-2" />
+              리뷰 관리
             </Button>
             <Button
               variant="destructive"

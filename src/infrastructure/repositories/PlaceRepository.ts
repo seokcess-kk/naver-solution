@@ -12,7 +12,10 @@ export class PlaceRepository implements IPlaceRepository {
   }
 
   async findById(id: string): Promise<Place | null> {
-    return this.repository.findOne({ where: { id } });
+    return this.repository.findOne({
+      where: { id },
+      relations: ['user', 'reviews', 'placeKeywords'],
+    });
   }
 
   async findAll(options: PaginationOptions = {}): Promise<PaginatedResult<Place>> {
@@ -72,7 +75,7 @@ export class PlaceRepository implements IPlaceRepository {
 
     const [data, total] = await this.repository.findAndCount({
       where: { user: { id: userId } },
-      relations: ['user'],
+      relations: ['user', 'reviews', 'placeKeywords'],
       skip,
       take: limit,
       order: { [sortBy]: sortOrder },

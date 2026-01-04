@@ -30,9 +30,19 @@ export function RegisterForm() {
     try {
       await registerUser(data.email, data.password, data.name);
       router.push('/dashboard');
-    } catch (err) {
-      const error = err as ApiErrorResponse;
-      setError(error.response?.data?.error?.message || '회원가입에 실패했습니다');
+    } catch (err: any) {
+      console.error('Registration error:', err);
+
+      // Handle specific error codes
+      if (err.response?.status === 409) {
+        setError('이미 사용 중인 이메일입니다. 다른 이메일을 사용해 주세요.');
+      } else if (err.response?.data?.message) {
+        setError(err.response.data.message);
+      } else if (err.message) {
+        setError(err.message);
+      } else {
+        setError('회원가입에 실패했습니다. 다시 시도해 주세요.');
+      }
     } finally {
       setIsLoading(false);
     }
