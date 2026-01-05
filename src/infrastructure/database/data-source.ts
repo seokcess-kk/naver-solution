@@ -16,4 +16,8 @@ export const AppDataSource = new DataSource({
   entities: ['src/domain/entities/**/*.ts'],
   migrations: ['src/infrastructure/database/migrations/**/*.ts'],
   subscribers: [],
+  extra: {
+    // Ensure UTF-8 encoding for Korean text support
+    charset: 'utf8mb4',
+  },
 });

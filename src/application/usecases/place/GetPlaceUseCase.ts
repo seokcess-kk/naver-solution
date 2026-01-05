@@ -5,7 +5,7 @@ import { NotFoundError } from '@application/errors/HttpError';
 export class GetPlaceUseCase {
   constructor(private readonly placeRepository: IPlaceRepository) {}
 
-  async execute(id: string, includeRelations: boolean = true): Promise<PlaceResponseDto> {
+  async execute(id: string, includeRelations: boolean = false): Promise<PlaceResponseDto> {
     // 1. Find place with optional relations
     const place = await this.placeRepository.findById(id);
     if (!place) {

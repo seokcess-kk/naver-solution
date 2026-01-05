@@ -11,11 +11,11 @@ export class CreatePlaceUseCase {
     private readonly userRepository: IUserRepository
   ) {}
 
-  async execute(dto: CreatePlaceDto): Promise<PlaceResponseDto> {
+  async execute(dto: CreatePlaceDto, userId: string): Promise<PlaceResponseDto> {
     // 1. Validate user exists
-    const user = await this.userRepository.findById(dto.userId);
+    const user = await this.userRepository.findById(userId);
     if (!user) {
-      throw new NotFoundError(`User with id ${dto.userId} not found`);
+      throw new NotFoundError(`User with id ${userId} not found`);
     }
 
     // 2. Check for duplicate naverPlaceId

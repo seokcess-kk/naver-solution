@@ -359,7 +359,7 @@ describe('Ranking E2E Tests', () => {
         expect(response.body.success).toBe(true);
         expect(response.body.data).toHaveProperty('id');
       }
-    });
+    }, 60000); // Increase timeout to 60 seconds for scraping test
 
     it('should return validation error for missing placeKeywordId', async () => {
       const response = await request(context.app)

@@ -35,6 +35,10 @@ npm run test:e2e           # Run E2E API tests only
 npm run test:e2e:watch     # Run E2E tests in watch mode
 npm run test:watch         # Run tests in watch mode
 npm run test:coverage      # Generate coverage report
+
+# Run a single test file
+jest tests/unit/path/to/test.spec.ts
+jest tests/e2e/auth/register.test.ts --watch
 ```
 
 **Test Structure**: Tests are organized in `tests/` directory with:
@@ -161,18 +165,24 @@ web/
 │   │   └── register/   # Registration page
 │   ├── (dashboard)/    # Route group for authenticated pages
 │   │   ├── dashboard/  # Main dashboard
-│   │   └── places/     # Place management pages
-│   │       ├── page.tsx                         # List all places
-│   │       ├── new/page.tsx                     # Create new place
-│   │       ├── [id]/page.tsx                    # View place details
-│   │       ├── [id]/edit/page.tsx              # Edit place
-│   │       └── [id]/keywords/[keywordId]/rankings/page.tsx  # Ranking data
+│   │   ├── places/     # Place management pages
+│   │   │   ├── page.tsx                         # List all places
+│   │   │   ├── new/page.tsx                     # Create new place
+│   │   │   └── [id]/                            # Dynamic place routes
+│   │   │       ├── page.tsx                     # View place details
+│   │   │       ├── edit/page.tsx                # Edit place
+│   │   │       └── keywords/[keywordId]/rankings/page.tsx  # Ranking data
+│   │   ├── profile/    # User profile page
+│   │   ├── settings/   # User settings page
+│   │   └── layout.tsx  # Dashboard layout (shared for all authenticated routes)
 │   ├── layout.tsx      # Root layout
 │   └── page.tsx        # Home page
 │
 ├── components/          # Reusable React components
 │   ├── auth/           # Authentication components (LoginForm, RegisterForm)
 │   ├── places/         # Place management components (PlaceForm)
+│   ├── reviews/        # Review components
+│   ├── competitors/    # Competitor components
 │   └── ui/             # shadcn/ui components (button, input, form, etc.)
 │
 ├── lib/                # Utilities and core logic
@@ -181,7 +191,10 @@ web/
 │   │   ├── auth.ts     # Authentication API calls
 │   │   ├── place.ts    # Place API calls
 │   │   ├── keyword.ts  # Keyword API calls
-│   │   └── ranking.ts  # Ranking API calls
+│   │   ├── ranking.ts  # Ranking API calls
+│   │   ├── review.ts   # Review API calls
+│   │   ├── competitor.ts # Competitor API calls
+│   │   └── notification.ts # Notification API calls
 │   ├── stores/         # Zustand stores
 │   │   └── authStore.ts # Authentication state (persisted to localStorage)
 │   ├── hooks/          # Custom React hooks
@@ -270,10 +283,12 @@ Copy `.env.example` to `.env` and configure:
 - JWT settings (JWT_SECRET, JWT_ACCESS_EXPIRES_IN, JWT_REFRESH_EXPIRES_IN)
 - Security (BCRYPT_SALT_ROUNDS)
 - Application (PORT, NODE_ENV)
+  - **Important**: Use `PORT=8000` to match frontend API URL configuration
 - SMTP for email notifications
 - Slack webhook URL for Slack notifications
 - Redis connection (optional, for caching)
 - Naver scraping configuration (PUPPETEER_HEADLESS, PUPPETEER_TIMEOUT, etc.)
+- Firecrawl API (FIRECRAWL_API_KEY, FIRECRAWL_API_URL) - optional for hybrid scraping
 
 ### Frontend (web/.env.local)
 

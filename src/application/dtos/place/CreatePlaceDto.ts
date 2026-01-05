@@ -38,8 +38,4 @@ export class CreatePlaceDto {
   @IsUrl()
   @IsNotEmpty()
   naverPlaceUrl: string;
-
-  @IsUUID()
-  @IsNotEmpty()
-  userId: string;
 }

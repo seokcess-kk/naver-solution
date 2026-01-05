@@ -19,8 +19,9 @@ describe('CreatePlaceUseCase', () => {
   });
 
   describe('execute', () => {
+    const mockUserId = 'user-123';
     const mockUser: User = {
-      id: 'user-123',
+      id: mockUserId,
       email: 'test@example.com',
       passwordHash: 'hashedPassword',
       name: 'Test User',
@@ -32,7 +33,6 @@ describe('CreatePlaceUseCase', () => {
     };
 
     const validDto: CreatePlaceDto = {
-      userId: 'user-123',
       naverPlaceId: 'naver-place-123',
       name: 'Test Restaurant',
       category: 'Korean Restaurant',
@@ -67,7 +67,7 @@ describe('CreatePlaceUseCase', () => {
       });
 
       it('should successfully create a place with all fields', async () => {
-        const result = await useCase.execute(validDto);
+        const result = await useCase.execute(validDto, mockUserId);
 
         expect(result).toBeDefined();
         expect(result.id).toBe(mockPlace.id);
@@ -80,13 +80,13 @@ describe('CreatePlaceUseCase', () => {
       });
 
       it('should validate user exists before creating place', async () => {
-        await useCase.execute(validDto);
+        await useCase.execute(validDto, mockUserId);
 
-        expect(mockUserRepository.findById).toHaveBeenCalledWith(validDto.userId);
+        expect(mockUserRepository.findById).toHaveBeenCalledWith(mockUserId);
       });
 
       it('should check for duplicate naverPlaceId', async () => {
-        await useCase.execute(validDto);
+        await useCase.execute(validDto, mockUserId);
 
         expect(mockPlaceRepository.findByNaverPlaceId).toHaveBeenCalledWith(
           validDto.naverPlaceId
@@ -94,7 +94,7 @@ describe('CreatePlaceUseCase', () => {
       });
 
       it('should save place with user association', async () => {
-        await useCase.execute(validDto);
+        await useCase.execute(validDto, mockUserId);
 
         expect(mockPlaceRepository.save).toHaveBeenCalledWith(
           expect.objectContaining({
@@ -110,14 +110,14 @@ describe('CreatePlaceUseCase', () => {
       });
 
       it('should set isActive to true by default', async () => {
-        await useCase.execute(validDto);
+        await useCase.execute(validDto, mockUserId);
 
         const savedPlace = mockPlaceRepository.save.mock.calls[0][0];
         expect(savedPlace.isActive).toBe(true);
       });
 
       it('should return PlaceResponseDto', async () => {
-        const result = await useCase.execute(validDto);
+        const result = await useCase.execute(validDto, mockUserId);
 
         expect(result).toHaveProperty('id');
         expect(result).toHaveProperty('naverPlaceId');
@@ -132,9 +132,9 @@ describe('CreatePlaceUseCase', () => {
       it('should throw NotFoundError when user does not exist', async () => {
         mockUserRepository.findById.mockResolvedValue(null);
 
-        await expect(useCase.execute(validDto)).rejects.toThrow(NotFoundError);
-        await expect(useCase.execute(validDto)).rejects.toThrow(
-          `User with id ${validDto.userId} not found`
+        await expect(useCase.execute(validDto, mockUserId)).rejects.toThrow(NotFoundError);
+        await expect(useCase.execute(validDto, mockUserId)).rejects.toThrow(
+          `User with id ${mockUserId} not found`
         );
       });
 
@@ -142,8 +142,8 @@ describe('CreatePlaceUseCase', () => {
         mockUserRepository.findById.mockResolvedValue(mockUser);
         mockPlaceRepository.findByNaverPlaceId.mockResolvedValue(mockPlace);
 
-        await expect(useCase.execute(validDto)).rejects.toThrow(ConflictError);
-        await expect(useCase.execute(validDto)).rejects.toThrow(
+        await expect(useCase.execute(validDto, mockUserId)).rejects.toThrow(ConflictError);
+        await expect(useCase.execute(validDto, mockUserId)).rejects.toThrow(
           `Place with naverPlaceId ${validDto.naverPlaceId} already exists`
         );
       });
@@ -152,7 +152,7 @@ describe('CreatePlaceUseCase', () => {
         const error = new Error('Database connection failed');
         mockUserRepository.findById.mockRejectedValue(error);
 
-        await expect(useCase.execute(validDto)).rejects.toThrow(error);
+        await expect(useCase.execute(validDto, mockUserId)).rejects.toThrow(error);
       });
 
       it('should propagate repository errors when checking duplicate', async () => {
@@ -160,7 +160,7 @@ describe('CreatePlaceUseCase', () => {
         const error = new Error('Database query failed');
         mockPlaceRepository.findByNaverPlaceId.mockRejectedValue(error);
 
-        await expect(useCase.execute(validDto)).rejects.toThrow(error);
+        await expect(useCase.execute(validDto, mockUserId)).rejects.toThrow(error);
       });
 
       it('should propagate repository errors when saving place', async () => {
@@ -169,7 +169,7 @@ describe('CreatePlaceUseCase', () => {
         const error = new Error('Failed to save place');
         mockPlaceRepository.save.mockRejectedValue(error);
 
-        await expect(useCase.execute(validDto)).rejects.toThrow(error);
+        await expect(useCase.execute(validDto, mockUserId)).rejects.toThrow(error);
       });
     });
 
@@ -182,7 +182,7 @@ describe('CreatePlaceUseCase', () => {
 
       it('should handle place without optional category', async () => {
         const dtoWithoutCategory = { ...validDto, category: undefined };
-        await useCase.execute(dtoWithoutCategory);
+        await useCase.execute(dtoWithoutCategory, mockUserId);
 
         expect(mockPlaceRepository.save).toHaveBeenCalledWith(
           expect.objectContaining({
@@ -193,7 +193,7 @@ describe('CreatePlaceUseCase', () => {
 
       it('should handle place without optional address', async () => {
         const dtoWithoutAddress = { ...validDto, address: undefined };
-        await useCase.execute(dtoWithoutAddress);
+        await useCase.execute(dtoWithoutAddress, mockUserId);
 
         expect(mockPlaceRepository.save).toHaveBeenCalledWith(
           expect.objectContaining({
@@ -204,13 +204,12 @@ describe('CreatePlaceUseCase', () => {
 
       it('should handle place with only required fields', async () => {
         const minimalDto: CreatePlaceDto = {
-          userId: validDto.userId,
           naverPlaceId: validDto.naverPlaceId,
           name: validDto.name,
           naverPlaceUrl: validDto.naverPlaceUrl,
         };
 
-        await useCase.execute(minimalDto);
+        await useCase.execute(minimalDto, mockUserId);
 
         expect(mockPlaceRepository.save).toHaveBeenCalledWith(
           expect.objectContaining({
@@ -229,7 +228,7 @@ describe('CreatePlaceUseCase', () => {
         const placeWithLongName = { ...mockPlace, name: longName };
         mockPlaceRepository.save.mockResolvedValue(placeWithLongName);
 
-        const result = await useCase.execute(dtoWithLongName);
+        const result = await useCase.execute(dtoWithLongName, mockUserId);
 
         expect(result.name).toBe(longName);
       });
@@ -238,7 +237,7 @@ describe('CreatePlaceUseCase', () => {
         const specialId = 'place-123_ABC!@#';
         const dtoWithSpecialId = { ...validDto, naverPlaceId: specialId };
 
-        await useCase.execute(dtoWithSpecialId);
+        await useCase.execute(dtoWithSpecialId, mockUserId);
 
         expect(mockPlaceRepository.save).toHaveBeenCalledWith(
           expect.objectContaining({
@@ -256,7 +255,7 @@ describe('CreatePlaceUseCase', () => {
       });
 
       it('should validate user before checking duplicate', async () => {
-        await useCase.execute(validDto);
+        await useCase.execute(validDto, mockUserId);
 
         const findUserCall = mockUserRepository.findById.mock.invocationCallOrder[0];
         const findPlaceCall = mockPlaceRepository.findByNaverPlaceId.mock.invocationCallOrder[0];
@@ -265,7 +264,7 @@ describe('CreatePlaceUseCase', () => {
       });
 
       it('should check duplicate before saving', async () => {
-        await useCase.execute(validDto);
+        await useCase.execute(validDto, mockUserId);
 
         const findPlaceCall = mockPlaceRepository.findByNaverPlaceId.mock.invocationCallOrder[0];
         const saveCall = mockPlaceRepository.save.mock.invocationCallOrder[0];
@@ -276,7 +275,7 @@ describe('CreatePlaceUseCase', () => {
       it('should not check duplicate if user not found', async () => {
         mockUserRepository.findById.mockResolvedValue(null);
 
-        await expect(useCase.execute(validDto)).rejects.toThrow();
+        await expect(useCase.execute(validDto, mockUserId)).rejects.toThrow();
 
         expect(mockPlaceRepository.findByNaverPlaceId).not.toHaveBeenCalled();
         expect(mockPlaceRepository.save).not.toHaveBeenCalled();
@@ -285,7 +284,7 @@ describe('CreatePlaceUseCase', () => {
       it('should not save if naverPlaceId already exists', async () => {
         mockPlaceRepository.findByNaverPlaceId.mockResolvedValue(mockPlace);
 
-        await expect(useCase.execute(validDto)).rejects.toThrow();
+        await expect(useCase.execute(validDto, mockUserId)).rejects.toThrow();
 
         expect(mockPlaceRepository.save).not.toHaveBeenCalled();
       });

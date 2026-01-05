@@ -1,9 +1,15 @@
-import puppeteer, { Browser, Page } from 'puppeteer';
+import puppeteer, { Browser, Page, Frame } from 'puppeteer';
 import {
   INaverScrapingService,
   NaverRankingResult,
   NaverReviewResult,
 } from './interfaces/INaverScrapingService';
+import {
+  ScrapingTimeoutError,
+  ScrapingSelectorNotFoundError,
+  ScrapingNetworkError,
+  InternalServerError,
+} from '@application/errors/HttpError';
 
 export class NaverScrapingService implements INaverScrapingService {
   private readonly headless: boolean;
@@ -290,6 +296,37 @@ export class NaverScrapingService implements INaverScrapingService {
   }
 
   /**
+   * Find the frame containing reviews (main frame or iframe)
+   */
+  private async findReviewFrame(page: Page): Promise<Frame> {
+    const allFrames = page.frames();
+    console.log(`[NaverScrapingService] Found ${allFrames.length} frames`);
+
+    // Priority 1: iframe with /review in URL
+    let targetFrame = allFrames.find(f => f.url().includes('/review'));
+    if (targetFrame) {
+      console.log(`[NaverScrapingService] Using review iframe: ${targetFrame.url()}`);
+      return targetFrame;
+    }
+
+    // Priority 2: iframe with naverPlaceId (excluding main frame)
+    const naverPlaceIdFromUrl = page.url().match(/place\/([^/?]+)/)?.[1];
+    if (naverPlaceIdFromUrl) {
+      targetFrame = allFrames.find(
+        f => f.url().includes(naverPlaceIdFromUrl) && f !== page.mainFrame()
+      );
+      if (targetFrame) {
+        console.log(`[NaverScrapingService] Using place iframe: ${targetFrame.url()}`);
+        return targetFrame;
+      }
+    }
+
+    // Priority 3: main frame
+    console.log('[NaverScrapingService] Using main frame');
+    return page.mainFrame();
+  }
+
+  /**
    * Scrape reviews from Naver Place page
    */
   async scrapeReviews(
@@ -307,25 +344,53 @@ export class NaverScrapingService implements INaverScrapingService {
       // Navigate with retry
       await this.navigateWithRetry(page, placeUrl);
 
-      // Wait for review section to load
+      // Find the frame containing reviews (main frame or iframe)
+      const reviewFrame = await this.findReviewFrame(page);
+
+      // Wait for review section to load (with retry)
       try {
-        await this.waitForReviewSection(page);
-      } catch (error) {
-        console.warn('[NaverScrapingService] Review section not found');
-        return []; // Graceful degradation
+        await this.retryWithBackoff(
+          () => this.waitForReviewSection(reviewFrame),
+          undefined,
+          'waitForReviewSection'
+        );
+      } catch (error: any) {
+        if (error instanceof ScrapingSelectorNotFoundError) {
+          console.warn('[NaverScrapingService] Review section not found - place may have no reviews');
+          return []; // Graceful degradation for "no reviews" case
+        }
+        // Network errors or other errors should propagate
+        throw error;
       }
 
-      // Extract reviews
-      const reviews = await this.extractReviews(page, limit);
+      // Extract reviews (with retry)
+      const reviews = await this.retryWithBackoff(
+        () => this.extractReviews(reviewFrame, limit),
+        undefined,
+        'extractReviews'
+      );
 
       // Rate limiting
       await this.sleep(this.delay);
 
       console.log(`[NaverScrapingService] Scraped ${reviews.length} reviews`);
       return reviews;
-    } catch (error) {
+    } catch (error: any) {
       console.error('[NaverScrapingService] Review scraping error:', error);
-      return []; // Graceful degradation
+
+      if (error instanceof ScrapingSelectorNotFoundError) {
+        return []; // "No reviews" case - graceful degradation
+      }
+
+      if (error instanceof ScrapingTimeoutError || error instanceof ScrapingNetworkError) {
+        throw error; // Transient errors - should be retried by caller
+      }
+
+      if (error.name === 'TimeoutError') {
+        throw new ScrapingTimeoutError(`Review scraping timed out after ${this.timeout}ms`);
+      }
+
+      throw new InternalServerError(`Unexpected scraping error: ${error.message}`);
     } finally {
       await page.close();
       await browser.close();
@@ -336,39 +401,61 @@ export class NaverScrapingService implements INaverScrapingService {
   /**
    * Wait for review section to load
    */
-  private async waitForReviewSection(page: Page): Promise<void> {
+  private async waitForReviewSection(frame: Frame): Promise<void> {
     // Try multiple selectors for review section
-    const selectors = ['.review_item', '.place_review_list', '[data-review-id]', '.ReviewItem'];
+    const selectors = [
+      '.place_section_review',    // From investigate-naver-review.ts
+      '.review_item',
+      '.review_li',                // From investigate-naver-review.ts
+      '.place_review_list',
+      '[data-review-id]',
+      '.ReviewItem',
+      '[class*="review"][class*="item"]'  // Flexible pattern matching
+    ];
 
     for (const selector of selectors) {
       try {
-        await page.waitForSelector(selector, { timeout: this.timeout });
+        await frame.waitForSelector(selector, { timeout: this.timeout });
         console.log(`[NaverScrapingService] Review section found with selector: ${selector}`);
         return;
-      } catch {
-        continue;
+      } catch (error: any) {
+        if (error.name === 'TimeoutError') {
+          continue; // Try next selector
+        } else {
+          console.error(`[NaverScrapingService] Error waiting for selector ${selector}:`, error);
+          throw new ScrapingNetworkError(`Network error while waiting for reviews: ${error.message}`);
+        }
       }
     }
 
-    throw new Error('Review section not found');
+    throw new ScrapingSelectorNotFoundError(
+      `Review section not found. Tried selectors: ${selectors.join(', ')}`
+    );
   }
 
   /**
-   * Extract reviews from page
+   * Extract reviews from frame
    */
   private async extractReviews(
-    page: Page,
+    frame: Frame,
     limit: number
   ): Promise<NaverReviewResult[]> {
     const reviews: NaverReviewResult[] = [];
 
     try {
       // Try multiple selectors for review items
-      const itemSelectors = ['.review_item', '.ReviewItem', '[data-review-id]'];
+      const itemSelectors = [
+        '.place_section_review',
+        '.review_item',
+        '.review_li',
+        '.ReviewItem',
+        '[data-review-id]',
+        '[class*="review"][class*="item"]'
+      ];
       let reviewItems: any[] = [];
 
       for (const selector of itemSelectors) {
-        reviewItems = await page.$$(selector);
+        reviewItems = await frame.$$(selector);
         if (reviewItems.length > 0) {
           console.log(`[NaverScrapingService] Found ${reviewItems.length} review items with selector: ${selector}`);
           break;
@@ -515,6 +602,45 @@ export class NaverScrapingService implements INaverScrapingService {
       console.warn(`[NaverScrapingService] Failed to parse date: ${dateText}`);
       return null;
     }
+  }
+
+  /**
+   * Retry operation with exponential backoff
+   */
+  private async retryWithBackoff<T>(
+    operation: () => Promise<T>,
+    retries: number = parseInt(process.env.PUPPETEER_RETRY_COUNT || '2', 10),
+    operationName: string = 'operation'
+  ): Promise<T> {
+    for (let attempt = 0; attempt <= retries; attempt++) {
+      try {
+        return await operation();
+      } catch (error: any) {
+        const isLastAttempt = attempt === retries;
+
+        // Don't retry permanent failures
+        if (error instanceof ScrapingSelectorNotFoundError) {
+          throw error;
+        }
+
+        if (isLastAttempt) {
+          console.error(
+            `[NaverScrapingService] ${operationName} failed after ${retries + 1} attempts`
+          );
+          throw error;
+        }
+
+        const backoffMs = 1000 * Math.pow(2, attempt); // 1s, 2s, 4s...
+        console.warn(
+          `[NaverScrapingService] ${operationName} failed (attempt ${attempt + 1}/${retries + 1}), ` +
+          `retrying in ${backoffMs}ms...`,
+          error.message
+        );
+        await this.sleep(backoffMs);
+      }
+    }
+
+    throw new Error('Retry logic error'); // Should never reach here
   }
 
   /**

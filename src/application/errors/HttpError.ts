@@ -61,3 +61,24 @@ export class InternalServerError extends HttpError {
     super(500, message, false);
   }
 }
+
+/**
+ * Scraping-specific errors
+ */
+export class ScrapingTimeoutError extends HttpError {
+  constructor(message: string = 'Scraping operation timed out') {
+    super(504, message);
+  }
+}
+
+export class ScrapingSelectorNotFoundError extends HttpError {
+  constructor(message: string = 'Required page elements not found') {
+    super(404, message);
+  }
+}
+
+export class ScrapingNetworkError extends HttpError {
+  constructor(message: string = 'Network error during scraping') {
+    super(502, message);
+  }
+}

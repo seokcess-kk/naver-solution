@@ -11,6 +11,7 @@ interface ListPlacesOptions {
   sortBy?: string;
   sortOrder?: 'ASC' | 'DESC';
   activeOnly?: boolean;
+  includeRelations?: boolean;
 }
 
 export class ListPlacesUseCase {
@@ -20,7 +21,7 @@ export class ListPlacesUseCase {
   ) {}
 
   async execute(options: ListPlacesOptions): Promise<PaginatedResult<PlaceResponseDto>> {
-    const { userId, page, limit, sortBy, sortOrder, activeOnly = false } = options;
+    const { userId, page, limit, sortBy, sortOrder, activeOnly = false, includeRelations = false } = options;
 
     // 1. Validate user exists
     const user = await this.userRepository.findById(userId);
@@ -59,7 +60,7 @@ export class ListPlacesUseCase {
 
     // 3. Convert to DTOs
     return {
-      data: result.data.map((place) => PlaceResponseDto.fromEntity(place, true)),
+      data: result.data.map((place) => PlaceResponseDto.fromEntity(place, includeRelations)),
       pagination: result.pagination,
     };
   }

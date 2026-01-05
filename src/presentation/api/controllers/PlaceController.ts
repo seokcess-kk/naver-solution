@@ -33,7 +33,8 @@ export class PlaceController {
   ): Promise<void> => {
     try {
       const dto: CreatePlaceDto = req.body;
-      const result = await this.createPlaceUseCase.execute(dto);
+      const userId = req.user!.userId; // authMiddleware guarantees req.user exists
+      const result = await this.createPlaceUseCase.execute(dto, userId);
 
       res.status(201).json({
         success: true,
@@ -60,7 +61,7 @@ export class PlaceController {
         throw new BadRequestError('Place ID is required');
       }
 
-      const result = await this.getPlaceUseCase.execute(id);
+      const result = await this.getPlaceUseCase.execute(id, true);
 
       if (!result) {
         throw new NotFoundError('Place not found');
@@ -78,7 +79,7 @@ export class PlaceController {
   /**
    * GET /api/places
    * List all places for a user
-   * Query params: userId (required), page?, limit?, sortBy?, sortOrder?
+   * Query params: page?, limit?, sortBy?, sortOrder?
    */
   listPlaces = async (
     req: Request,
@@ -86,11 +87,8 @@ export class PlaceController {
     next: NextFunction
   ): Promise<void> => {
     try {
-      const { userId, page, limit, sortBy, sortOrder } = req.query;
-
-      if (!userId || typeof userId !== 'string') {
-        throw new BadRequestError('userId query parameter is required');
-      }
+      const userId = req.user!.userId; // authMiddleware guarantees req.user exists
+      const { page, limit, sortBy, sortOrder } = req.query;
 
       // Parse pagination parameters
       const pageNum = page ? parseInt(page as string, 10) : 1;
@@ -112,6 +110,7 @@ export class PlaceController {
         limit: limitNum,
         sortBy: sortByField,
         sortOrder: sortOrderValue,
+        includeRelations: true,
       });
 
       res.status(200).json({
@@ -206,8 +205,7 @@ export class PlaceController {
 
   /**
    * GET /api/places/stats
-   * Get place statistics for a user
-   * Query params: userId (required)
+   * Get place statistics for authenticated user
    */
   getPlaceStats = async (
     req: Request,
@@ -215,12 +213,7 @@ export class PlaceController {
     next: NextFunction
   ): Promise<void> => {
     try {
-      const { userId } = req.query;
-
-      if (!userId || typeof userId !== 'string') {
-        throw new BadRequestError('userId query parameter is required');
-      }
-
+      const userId = req.user!.userId; // authMiddleware guarantees req.user exists
       const result = await this.getPlaceStatsUseCase.execute(userId);
 
       res.status(200).json({

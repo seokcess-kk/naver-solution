@@ -22,9 +22,15 @@ export function createApp(container: DIContainer): Application {
     })
   );
 
-  // Body parsing middleware
-  app.use(express.json());
+  // Body parsing middleware with explicit UTF-8 charset
+  app.use(express.json({ type: 'application/json' }));
   app.use(express.urlencoded({ extended: true }));
+
+  // Set default charset for all responses
+  app.use((req, res, next) => {
+    res.setHeader('Content-Type', 'application/json; charset=utf-8');
+    next();
+  });
 
   // Request logging middleware
   app.use(requestLogger);
