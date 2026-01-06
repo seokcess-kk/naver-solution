@@ -20,6 +20,14 @@ export interface NaverReviewResult {
 }
 
 /**
+ * Result interface for review count extraction from home tab
+ */
+export interface NaverReviewCountsResult {
+  visitorReviewCount: number | null; // 방문자 리뷰 개수
+  blogReviewCount: number | null; // 블로그 리뷰 개수
+}
+
+/**
  * Interface for Naver Place scraping operations
  */
 export interface INaverScrapingService {
@@ -40,12 +48,15 @@ export interface INaverScrapingService {
    * Scrape reviews from Naver Place page
    * @param naverPlaceId - Naver Place ID
    * @param limit - Maximum number of reviews to scrape (default: 10)
-   * @returns Array of scraped review data
+   * @returns Object containing scraped reviews and review counts from home tab
    */
   scrapeReviews(
     naverPlaceId: string,
     limit?: number
-  ): Promise<NaverReviewResult[]>;
+  ): Promise<{
+    reviews: NaverReviewResult[];
+    counts: NaverReviewCountsResult;
+  }>;
 
   /**
    * Close browser instance and cleanup resources

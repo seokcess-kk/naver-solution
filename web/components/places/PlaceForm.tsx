@@ -84,7 +84,7 @@ export function PlaceForm({
               <FormLabel>네이버 플레이스 URL *</FormLabel>
               <FormControl>
                 <Input
-                  placeholder="예: https://pcmap.place.naver.com/restaurant/1234567890"
+                  placeholder="예: https://m.place.naver.com/place/1234567890"
                   {...field}
                 />
               </FormControl>

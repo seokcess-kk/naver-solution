@@ -306,7 +306,8 @@ export class DIContainer {
         this.get('NaverScrapingService'),
         this.get('PlaceRepository'),
         this.get('ReviewRepository'),
-        this.get('RecordReviewUseCase')
+        this.get('RecordReviewUseCase'),
+        this.get('RecordReviewHistoryUseCase')
       )
     );
 

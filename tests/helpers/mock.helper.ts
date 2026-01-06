@@ -156,7 +156,13 @@ export class MockNaverScrapingService implements INaverScrapingService {
     };
   }
 
-  async scrapeReviews(naverPlaceId: string, limit: number = 10): Promise<NaverReviewResult[]> {
+  async scrapeReviews(
+    naverPlaceId: string,
+    limit: number = 10
+  ): Promise<{
+    reviews: NaverReviewResult[];
+    counts: import('@infrastructure/naver/interfaces/INaverScrapingService').NaverReviewCountsResult;
+  }> {
     if (this.options.throwError) {
       throw new Error(this.options.errorMessage);
     }
@@ -170,7 +176,10 @@ export class MockNaverScrapingService implements INaverScrapingService {
       publishedAt: partial.publishedAt ?? new Date(),
     }));
 
-    return reviews.slice(0, limit);
+    return {
+      reviews: reviews.slice(0, limit),
+      counts: { visitorReviewCount: 100, blogReviewCount: 50 },
+    };
   }
 
   async close(): Promise<void> {

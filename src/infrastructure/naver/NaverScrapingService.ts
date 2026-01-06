@@ -3,6 +3,7 @@ import {
   INaverScrapingService,
   NaverRankingResult,
   NaverReviewResult,
+  NaverReviewCountsResult,
 } from './interfaces/INaverScrapingService';
 import {
   ScrapingTimeoutError,
@@ -298,6 +299,116 @@ export class NaverScrapingService implements INaverScrapingService {
   /**
    * Find the frame containing reviews (main frame or iframe)
    */
+  /**
+   * Extract review counts from home tab (before clicking review tab)
+   *
+   * Parses text like "방문자 리뷰 2,123" and "블로그 리뷰 456" to extract counts
+   */
+  private async extractReviewCounts(page: Page): Promise<import('./interfaces/INaverScrapingService').NaverReviewCountsResult> {
+    console.log('[NaverScrapingService] Extracting review counts from home tab...');
+
+    let visitorReviewCount: number | null = null;
+    let blogReviewCount: number | null = null;
+
+    const tabSelectors = [
+      'a[href*="review"]',
+      '.tab_review',
+      '[role="tab"]',
+      '.place_menu_review',
+    ];
+
+    try {
+      for (const selector of tabSelectors) {
+        const elements = await page.$$(selector);
+
+        if (elements.length === 0) continue;
+
+        for (const element of elements) {
+          try {
+            const text = await page.evaluate(el => el?.textContent?.trim() || '', element);
+
+            if (!text) continue;
+
+            // Parse visitor review count: "방문자 리뷰 2,123"
+            if (text.includes('방문자') && text.includes('리뷰')) {
+              const match = text.match(/[\d,]+/);
+              if (match) {
+                const numberStr = match[0].replace(/,/g, '');
+                visitorReviewCount = parseInt(numberStr, 10);
+                console.log(`[NaverScrapingService] Found visitor review count: ${visitorReviewCount}`);
+              }
+            }
+
+            // Parse blog review count: "블로그 리뷰 456"
+            if (text.includes('블로그') && text.includes('리뷰')) {
+              const match = text.match(/[\d,]+/);
+              if (match) {
+                const numberStr = match[0].replace(/,/g, '');
+                blogReviewCount = parseInt(numberStr, 10);
+                console.log(`[NaverScrapingService] Found blog review count: ${blogReviewCount}`);
+              }
+            }
+          } catch (error) {
+            // Skip this element and continue
+            continue;
+          }
+        }
+
+        // If we found at least one count, we can stop
+        if (visitorReviewCount !== null || blogReviewCount !== null) {
+          break;
+        }
+      }
+    } catch (error) {
+      console.warn('[NaverScrapingService] Failed to extract review counts:', error);
+    }
+
+    const result = { visitorReviewCount, blogReviewCount };
+    console.log('[NaverScrapingService] Extracted review counts:', result);
+    return result;
+  }
+
+  /**
+   * Click review tab to load review section
+   */
+  private async clickReviewTab(page: Page): Promise<void> {
+    console.log('[NaverScrapingService] Attempting to click review tab...');
+
+    const reviewTabSelectors = [
+      'a[href*="review"]',
+      'button[aria-label*="리뷰"]',
+      '.tab_review',
+      '[role="tab"]',  // Generic tab selector
+    ];
+
+    for (const selector of reviewTabSelectors) {
+      try {
+        // Try to find the review tab element
+        const elements = await page.$$(selector);
+
+        for (const element of elements) {
+          // Check if this element is the review tab by checking text content
+          const text = await page.evaluate(el => el?.textContent?.trim().toLowerCase(), element);
+
+          if (text && (text.includes('리뷰') || text.includes('review'))) {
+            console.log(`[NaverScrapingService] Found review tab with selector: ${selector}, text: "${text}"`);
+            await element.click();
+            console.log('[NaverScrapingService] Review tab clicked');
+
+            // Wait for review content to load
+            await this.sleep(2000);
+            return;
+          }
+        }
+      } catch (error) {
+        // Continue to next selector
+        continue;
+      }
+    }
+
+    console.log('[NaverScrapingService] Review tab not found or already on review page');
+  }
+
   private async findReviewFrame(page: Page): Promise<Frame> {
     const allFrames = page.frames();
     console.log(`[NaverScrapingService] Found ${allFrames.length} frames`);
@@ -332,17 +443,24 @@ export class NaverScrapingService implements INaverScrapingService {
   async scrapeReviews(
     naverPlaceId: string,
     limit: number = 10
-  ): Promise<NaverReviewResult[]> {
+  ): Promise<{ reviews: NaverReviewResult[]; counts: NaverReviewCountsResult }> {
     const browser = await this.createBrowser();
     const page = await browser.newPage();
+    let counts: NaverReviewCountsResult = { visitorReviewCount: null, blogReviewCount: null };
 
     try {
       // Build Naver Place URL
-      const placeUrl = `https://pcmap.place.naver.com/place/${naverPlaceId}`;
+      const placeUrl = `https://m.place.naver.com/place/${naverPlaceId}`;
       console.log(`[NaverScrapingService] Scraping reviews: ${placeUrl}`);
 
       // Navigate with retry
       await this.navigateWithRetry(page, placeUrl);
+
+      // Extract review counts from home tab (BEFORE clicking review tab)
+      counts = await this.extractReviewCounts(page);
+
+      // Click review tab to load review section
+      await this.clickReviewTab(page);
 
       // Find the frame containing reviews (main frame or iframe)
       const reviewFrame = await this.findReviewFrame(page);
@@ -357,7 +475,7 @@ export class NaverScrapingService implements INaverScrapingService {
       } catch (error: any) {
         if (error instanceof ScrapingSelectorNotFoundError) {
           console.warn('[NaverScrapingService] Review section not found - place may have no reviews');
-          return []; // Graceful degradation for "no reviews" case
+          return { reviews: [], counts }; // Graceful degradation for "no reviews" case
         }
         // Network errors or other errors should propagate
         throw error;
@@ -374,12 +492,12 @@ export class NaverScrapingService implements INaverScrapingService {
       await this.sleep(this.delay);
 
       console.log(`[NaverScrapingService] Scraped ${reviews.length} reviews`);
-      return reviews;
+      return { reviews, counts };
     } catch (error: any) {
       console.error('[NaverScrapingService] Review scraping error:', error);
 
       if (error instanceof ScrapingSelectorNotFoundError) {
-        return []; // "No reviews" case - graceful degradation
+        return { reviews: [], counts: { visitorReviewCount: null, blogReviewCount: null } }; // "No reviews" case - graceful degradation
       }
 
       if (error instanceof ScrapingTimeoutError || error instanceof ScrapingNetworkError) {

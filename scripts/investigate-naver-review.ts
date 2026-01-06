@@ -15,7 +15,7 @@ const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 async function investigateNaverReview(naverPlaceId: string): Promise<void> {
   console.log('\n=== Naver Place Review HTML 구조 조사 ===\n');
   console.log(`Place ID: ${naverPlaceId}`);
-  console.log(`URL: https://pcmap.place.naver.com/place/${naverPlaceId}\n`);
+  console.log(`URL: https://m.place.naver.com/place/${naverPlaceId}\n`);
 
   const browser: Browser = await puppeteer.launch({
     headless: false, // 브라우저 창 표시
@@ -26,7 +26,7 @@ async function investigateNaverReview(naverPlaceId: string): Promise<void> {
   await page.setViewport({ width: 1920, height: 1080 });
 
   try {
-    const url = `https://pcmap.place.naver.com/place/${naverPlaceId}`;
+    const url = `https://m.place.naver.com/place/${naverPlaceId}`;
     console.log(`[1] 페이지 접속 중...`);
     await page.goto(url, { waitUntil: 'networkidle2', timeout: 30000 });
     console.log('✅ 페이지 로드 완료\n');

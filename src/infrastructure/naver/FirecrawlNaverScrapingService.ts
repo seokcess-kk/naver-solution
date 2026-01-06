@@ -119,11 +119,17 @@ total_results는 페이지에 표시된 전체 검색 결과 개수입니다.`,
    * Scrape reviews - Phase 3 implementation
    * Currently returns empty array, reviews will use Puppeteer fallback
    */
-  async scrapeReviews(naverPlaceId: string, limit: number = 10): Promise<NaverReviewResult[]> {
+  async scrapeReviews(
+    naverPlaceId: string,
+    limit: number = 10
+  ): Promise<{ reviews: NaverReviewResult[]; counts: import('./interfaces/INaverScrapingService').NaverReviewCountsResult }> {
     console.log(
       `[FirecrawlNaverScrapingService] Review scraping not yet implemented (Phase 3)`
     );
-    return [];
+    return {
+      reviews: [],
+      counts: { visitorReviewCount: null, blogReviewCount: null },
+    };
   }
 
   /**

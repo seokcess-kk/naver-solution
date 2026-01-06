@@ -100,7 +100,10 @@ export class HybridNaverScrapingService implements INaverScrapingService {
    * Scrape reviews
    * Currently uses Puppeteer only (Phase 3 will add Firecrawl support)
    */
-  async scrapeReviews(naverPlaceId: string, limit: number = 10): Promise<NaverReviewResult[]> {
+  async scrapeReviews(
+    naverPlaceId: string,
+    limit: number = 10
+  ): Promise<{ reviews: NaverReviewResult[]; counts: import('./interfaces/INaverScrapingService').NaverReviewCountsResult }> {
     console.log('[HybridNaverScrapingService] Using Puppeteer for review scraping');
     return this.puppeteerService.scrapeReviews(naverPlaceId, limit);
   }
